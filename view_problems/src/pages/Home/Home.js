@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import { Menu, Drawer, Form, Select, Col, Row, DatePicker, Table, Tag, Space, Button, Input, InputNumber } from 'antd'
+import { Menu, Table, Tag, Space, Button, Input } from 'antd'
 import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined } from '@ant-design/icons';
 import 'antd/dist/antd.css';
+import RandomSettings from '../../components/RandomSettings/RandomSettings'
 import './Home.css';
 
 const { SubMenu } = Menu;
-const { Option } = Select;
 
 export default class Home extends Component {
     constructor(props) {
@@ -203,7 +203,6 @@ export default class Home extends Component {
         this.setState({ selectedRowKeys });
     };
 
-
     showRandomSettings = () => {
         this.setState({
             randomSettingsVisible: true,
@@ -278,100 +277,14 @@ export default class Home extends Component {
                     dataSource={this.state.data} 
                     rowKey={record => record.index}
                 />
-                <Drawer 
-                    title="Random Settings"
-                    width={720}
-                    onClose={this.closeRandomSettings}
+                <RandomSettings 
                     visible={this.state.randomSettingsVisible}
-                    bodyStyle={{ paddingBottom: 80 }}
-                >
-                    <Form layout="vertical" hideRequiredMark>
-                    <Row gutter={16}>
-                        <Col span={4}>
-                            <Form.Item
-                                name="amount"
-                                label="Amount"
-                                rules={[{ required: true, message: 'Please enter an amount' }]}
-                            >
-                                <InputNumber min={1} max={10} defaultValue={5} />
-                            </Form.Item>
-                        </Col>
-                        <Col span={10}>
-                            <Form.Item
-                                name="id"
-                                label="ID"
-                                rules={[{ required: true, message: 'Please choose an ID' }]}
-                            >
-                                <Select showSearch defaultValue='all' >
-                                    <Option value='all'>All</Option>
-                                    <Option value='a'>A</Option>
-                                    <Option value='b'>B</Option>
-                                    <Option value='c'>C</Option>
-                                    <Option value='d'>D</Option>
-                                    <Option value='e'>E</Option>
-                                    <Option value='f'>F</Option>
-                                    <Option value='g'>G</Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                        <Col span={10}>
-                            <Form.Item 
-                                name="difficulty"
-                                label="Difficulty"
-                            rules={[{ required: true, message: 'Please choose a difficulty' }]}
-                            >
-                                <Select mode="multiple" defaultValue='all' >
-                                    <Option value='all'>All</Option>
-                                    { sortedDifficulty.map(diff => <Option value={diff}>{diff}</Option>) }
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                    </Row>
-                    <Row gutter={16}>
-                        <Col span={24}>
-                            <Form.Item
-                                name="tags"
-                                label="Tags"
-                            rules={[{ required: true, message: 'Please choose a difficulty' }]}
-                            >
-                                <Select mode="multiple" defaultValue='all' >
-                                    <Option value='all'>All</Option>
-                                    { sortedTags.map(diff => <Option value={diff[0]}>{diff[0].toUpperCase()} ({diff[1]})</Option>) }
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                    </Row>
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="time_limit"
-                                label="Time Limit"
-                            rules={[{ required: true, message: 'Please choose a difficulty' }]}
-                            >
-                                <Select mode="multiple" defaultValue='all' >
-                                    <Option value='all'>All</Option>
-                                    { sortedTimeLimit.map(time => <Option value={time}>{time}</Option>) }
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                name="memory_limit"
-                                label="Memory Limit"
-                            rules={[{ required: true, message: 'Please choose a difficulty' }]}
-                            >
-                                <Select mode="multiple" defaultValue='all' >
-                                    <Option value='all'>All</Option>
-                                    { sortedMemLimit.map(mem => <Option value={mem}>{mem}</Option>) }
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                    </Row>
-                    <Row gutter={16}>
-                        <Button>Run</Button>
-                    </Row>
-                    </Form>
-                </Drawer>
+                    closeRandomSettings={this.closeRandomSettings}
+                    sortedTags={sortedTags} 
+                    sortedDifficulty={sortedDifficulty} 
+                    sortedTimeLimit={sortedTimeLimit} 
+                    sortedMemLimit={sortedMemLimit} 
+                />
             </div>
         )
     }
