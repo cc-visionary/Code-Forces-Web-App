@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Menu, Drawer, Form, Select, Col, Row, DatePicker, Table, Tag, Space, Button, Input } from 'antd'
+import { Menu, Drawer, Form, Select, Col, Row, DatePicker, Table, Tag, Space, Button, Input, InputNumber } from 'antd'
 import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined } from '@ant-design/icons';
 import 'antd/dist/antd.css';
 import './Home.css';
@@ -22,9 +22,7 @@ export default class Home extends Component {
 
     setColumns = () => {
         const columns = []
-        const sortedTags = this.countSortTags()
-        const sortedDifficulty = this.sortDifficulty()
-        const tagColorEquivalent = [ 'magenta', 'red', 'volcano', 'orange', 'gold', 'lime', 'green', 'cyan', 'blue', 'geekblue', 'purple' ]
+        const [ sortedTags, sortedDifficulty, sortedTimeLimit, sortedMemLimit ]  = this.sortTagsDiffTimeMem()
         const renders = {
             'Page URL': link => <a href={link.replace('//problemset', '/problemset')} target='_blank' rel="noopener noreferrer">{link.replace('//problemset', '/problemset')}</a>,
             'Tags': cats => cats.split(',').map(tag => {
@@ -170,13 +168,17 @@ export default class Home extends Component {
         });
     };
 
-    countSortTags = () => {
+    sortTagsDiffTimeMem = () => {
         /**
          * Counts the occurence of each tag
+         * Sorts the tag base on occurence (sets it to this.state.sortedTags)
          * 
-         * Sorts the tag base on occurense (sets it to this.state.sortedTags)
+         * Find the unique Difficuly, Time Limit, and Memory limit then sort based on the value
          */
         let nTags = {}
+        let difficulties = []
+        let timeLimit = []
+        let memoryLimit = []
         this.state.data.forEach(d => {
             if(d['Tags'] !== null && d['Tags'] !== '') {
                 d['Tags'].split(',').forEach(tag => {
@@ -185,33 +187,22 @@ export default class Home extends Component {
                         else nTags[tag] = 0
                     }
                 })
-            }
+            } else if(d['Difficulty'] !== null && d['Difficulty'] !== '' && !difficulties.includes(Number(d['Difficulty']))) difficulties.push(Number(d['Difficulty']))
+            else if(d['Time Limit'] !== null && d['Time Limit'] !== '' && !timeLimit.includes(Number(d['Time Limit']))) timeLimit.push(Number(d['Time Limit']))
+            else if(d['Memory Limit'] !== null && d['Memory Limit'] !== '' && !memoryLimit.includes(d['Memory Limit'])) memoryLimit.push(d['Memory Limit'])
         })
-        return Object.entries(nTags).sort((first, second) => {return second[1] - first[1]})
-    }
-
-    sortDifficulty = () => {
-        let difficulties = []
-        this.state.data.forEach(d => {
-            if(d['Difficulty'] !== null && d['Difficulty'] !== '' && !difficulties.includes(Number(d['Difficulty']))) difficulties.push(Number(d['Difficulty']))
-        })
-
-        return difficulties.sort((a, b) => a - b)
+        return [
+            Object.entries(nTags).sort((first, second) => {return second[1] - first[1]}), 
+            difficulties.sort((a, b) => a - b), 
+            timeLimit.sort((a, b) => a - b), 
+            memoryLimit.sort((a, b) => a - b)
+        ]
     }
 
     onSelectChange = (selectedRowKeys) => {
         this.setState({ selectedRowKeys });
     };
 
-    componentDidMount = () => {
-        let selectedRowKeys = [] // sets all the completed to be checked
-        this.state.data.forEach((val, key) => {
-            if(val['Completed'] == 1) {
-                selectedRowKeys = [...selectedRowKeys, key]
-            }
-        })
-        this.setState({ selectedRowKeys })
-    };
 
     showRandomSettings = () => {
         this.setState({
@@ -225,6 +216,16 @@ export default class Home extends Component {
         });
     };
     
+    componentDidMount = () => {
+        let selectedRowKeys = [] // sets all the completed to be checked
+        this.state.data.forEach((val, key) => {
+            if(val['Completed'] == 1) {
+                selectedRowKeys = [...selectedRowKeys, key]
+            }
+        })
+        this.setState({ selectedRowKeys })
+    };
+
     render() {
         const  { selectedRowKeys } = this.state;
 
@@ -243,8 +244,7 @@ export default class Home extends Component {
         };
 
         const columns = this.setColumns()
-        const sortedTags = this.countSortTags()
-        const sortedDifficulty = this.sortDifficulty()
+        const [ sortedTags, sortedDifficulty, sortedTimeLimit, sortedMemLimit ]  = this.sortTagsDiffTimeMem()
 
         return (
             <div className='home'>
@@ -287,43 +287,83 @@ export default class Home extends Component {
                 >
                     <Form layout="vertical" hideRequiredMark>
                     <Row gutter={16}>
-                        <Col span={8}>
+                        <Col span={4}>
                             <Form.Item
-                            name="amount"
-                            label="Amount"
-                            rules={[{ required: true, message: 'Please enter an amount' }]}
+                                name="amount"
+                                label="Amount"
+                                rules={[{ required: true, message: 'Please enter an amount' }]}
                             >
-                            <Input placeholder="Please enter an amount" defaultValue='5' />
+                                <InputNumber min={1} max={10} defaultValue={5} />
                             </Form.Item>
                         </Col>
-                        <Col span={8}>
+                        <Col span={10}>
                             <Form.Item
-                            name="id"
-                            label="ID"
-                            rules={[{ required: true, message: 'Please choose an ID' }]}
+                                name="id"
+                                label="ID"
+                                rules={[{ required: true, message: 'Please choose an ID' }]}
                             >
-                            <Select defaultValue='all' >
-                                <Option value='all'>All</Option>
-                                <Option value='a'>A</Option>
-                                <Option value='b'>B</Option>
-                                <Option value='c'>C</Option>
-                                <Option value='d'>D</Option>
-                                <Option value='e'>E</Option>
-                                <Option value='f'>F</Option>
-                                <Option value='g'>G</Option>
-                            </Select>
+                                <Select showSearch defaultValue='all' >
+                                    <Option value='all'>All</Option>
+                                    <Option value='a'>A</Option>
+                                    <Option value='b'>B</Option>
+                                    <Option value='c'>C</Option>
+                                    <Option value='d'>D</Option>
+                                    <Option value='e'>E</Option>
+                                    <Option value='f'>F</Option>
+                                    <Option value='g'>G</Option>
+                                </Select>
                             </Form.Item>
                         </Col>
-                        <Col span={8}>
-                            <Form.Item
-                            name="difficulty"
-                            label="Difficulty"
+                        <Col span={10}>
+                            <Form.Item 
+                                name="difficulty"
+                                label="Difficulty"
                             rules={[{ required: true, message: 'Please choose a difficulty' }]}
                             >
-                            <Select defaultValue='all' >
-                                <Option value='all'>All</Option>
-                                { sortedDifficulty.map(diff => <Option value={diff}>{diff}</Option>) }
-                            </Select>
+                                <Select mode="multiple" defaultValue='all' >
+                                    <Option value='all'>All</Option>
+                                    { sortedDifficulty.map(diff => <Option value={diff}>{diff}</Option>) }
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={24}>
+                            <Form.Item
+                                name="tags"
+                                label="Tags"
+                            rules={[{ required: true, message: 'Please choose a difficulty' }]}
+                            >
+                                <Select mode="multiple" defaultValue='all' >
+                                    <Option value='all'>All</Option>
+                                    { sortedTags.map(diff => <Option value={diff[0]}>{diff[0].toUpperCase()} ({diff[1]})</Option>) }
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="time_limit"
+                                label="Time Limit"
+                            rules={[{ required: true, message: 'Please choose a difficulty' }]}
+                            >
+                                <Select mode="multiple" defaultValue='all' >
+                                    <Option value='all'>All</Option>
+                                    { sortedTimeLimit.map(time => <Option value={time}>{time}</Option>) }
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="memory_limit"
+                                label="Memory Limit"
+                            rules={[{ required: true, message: 'Please choose a difficulty' }]}
+                            >
+                                <Select mode="multiple" defaultValue='all' >
+                                    <Option value='all'>All</Option>
+                                    { sortedMemLimit.map(mem => <Option value={mem}>{mem}</Option>) }
+                                </Select>
                             </Form.Item>
                         </Col>
                     </Row>
