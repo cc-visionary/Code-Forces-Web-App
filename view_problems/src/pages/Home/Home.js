@@ -11,6 +11,8 @@ export default class Home extends Component {
            data: props.data.data,
            schema: props.data.schema,
            selectedRowKeys: [], // Check here to configure the default column
+           searchText: '',
+           searchedColumn: '',
         };
     }; 
 
@@ -76,7 +78,7 @@ export default class Home extends Component {
                     dataIndex: col['name'],
                     key: col['name'].toLowerCase().replace(' ', '_'),
                     render: Object.keys(renders).includes(col['name']) ? renders[col['name']] : text => <div>{text}</div>,
-                    ...this.getColumnSearchProps('name'),
+                    ...this.getColumnSearchProps(col['name']),
                 }
             } else if(Object.keys(hasFilters).includes(col['name'])) {
                 columnRules = {
@@ -210,7 +212,7 @@ export default class Home extends Component {
 
     render() {
         const  { selectedRowKeys } = this.state;
-        
+
         // rowSelection object indicates the need for row selection
         const rowSelection = {
             selectedRowKeys,
