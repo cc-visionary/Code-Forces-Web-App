@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
-import { Table, Tag, Space, Button, Input } from 'antd'
-import { SearchOutlined } from '@ant-design/icons';
+import { Menu, Drawer, Form, Select, Col, Row, DatePicker, Table, Tag, Space, Button, Input } from 'antd'
+import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined } from '@ant-design/icons';
 import 'antd/dist/antd.css';
 import './Home.css';
+
+const { SubMenu } = Menu;
+const { Option } = Select;
 
 export default class Home extends Component {
     constructor(props) {
@@ -13,6 +16,7 @@ export default class Home extends Component {
            selectedRowKeys: [], // Check here to configure the default column
            searchText: '',
            searchedColumn: '',
+           randomSettingsVisible: false
         };
     }; 
 
@@ -208,8 +212,19 @@ export default class Home extends Component {
         })
         this.setState({ selectedRowKeys })
     };
-    
 
+    showRandomSettings = () => {
+        this.setState({
+            randomSettingsVisible: true,
+        });
+    };
+
+    closeRandomSettings = () => {
+        this.setState({
+            randomSettingsVisible: false,
+        });
+    };
+    
     render() {
         const  { selectedRowKeys } = this.state;
 
@@ -228,19 +243,95 @@ export default class Home extends Component {
         };
 
         const columns = this.setColumns()
+        const sortedTags = this.countSortTags()
+        const sortedDifficulty = this.sortDifficulty()
 
         return (
             <div className='home'>
                 <br/>
                 <h1>Codeforces Problems</h1>
+                <Menu style={{display: 'flex', justifyContent: 'flex-end'}} mode="horizontal">
+                    <Menu.Item onClick={this.showRandomSettings} key="random" icon={<CaretRightOutlined />}>
+                        Choose Random
+                    </Menu.Item>
+                    <SubMenu icon={<PieChartOutlined />} title="Statistics">
+                        <Menu.ItemGroup title="Item 1">
+                            <Menu.Item key="setting:1">Option 1</Menu.Item>
+                            <Menu.Item key="setting:2">Option 2</Menu.Item>
+                        </Menu.ItemGroup>
+                        <Menu.ItemGroup title="Item 2">
+                            <Menu.Item key="setting:3">Option 3</Menu.Item>
+                            <Menu.Item key="setting:4">Option 4</Menu.Item>
+                        </Menu.ItemGroup>
+                    </SubMenu>
+                    <Menu.Item key="view" icon={<EyeOutlined />}>
+                        <a href="https://codeforces.com/problemset?order=BY_SOLVED_DESC" target="_blank" rel="noopener noreferrer">
+                            View Problems
+                        </a>
+                    </Menu.Item>
+                </Menu>
                 <Table 
                     size='middle'
-                    pagination={{pageSize: 16}}
+                    pagination={{pageSize: 15}}
                     rowSelection={rowSelection} 
                     columns={columns} 
                     dataSource={this.state.data} 
                     rowKey={record => record.index}
                 />
+                <Drawer 
+                    title="Random Settings"
+                    width={720}
+                    onClose={this.closeRandomSettings}
+                    visible={this.state.randomSettingsVisible}
+                    bodyStyle={{ paddingBottom: 80 }}
+                >
+                    <Form layout="vertical" hideRequiredMark>
+                    <Row gutter={16}>
+                        <Col span={8}>
+                            <Form.Item
+                            name="amount"
+                            label="Amount"
+                            rules={[{ required: true, message: 'Please enter an amount' }]}
+                            >
+                            <Input placeholder="Please enter an amount" defaultValue='5' />
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                            name="id"
+                            label="ID"
+                            rules={[{ required: true, message: 'Please choose an ID' }]}
+                            >
+                            <Select defaultValue='all' >
+                                <Option value='all'>All</Option>
+                                <Option value='a'>A</Option>
+                                <Option value='b'>B</Option>
+                                <Option value='c'>C</Option>
+                                <Option value='d'>D</Option>
+                                <Option value='e'>E</Option>
+                                <Option value='f'>F</Option>
+                                <Option value='g'>G</Option>
+                            </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                            <Form.Item
+                            name="difficulty"
+                            label="Difficulty"
+                            rules={[{ required: true, message: 'Please choose a difficulty' }]}
+                            >
+                            <Select defaultValue='all' >
+                                <Option value='all'>All</Option>
+                                { sortedDifficulty.map(diff => <Option value={diff}>{diff}</Option>) }
+                            </Select>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Button>Run</Button>
+                    </Row>
+                    </Form>
+                </Drawer>
             </div>
         )
     }
