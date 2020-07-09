@@ -55,19 +55,20 @@ export default class Home extends Component {
             }
         }
         const hasSearch = [
-            this.state.schema['fields'][0]['name'], // ID
-            this.state.schema['fields'][1]['name'], // Name
+            this.state.schema['fields'][2]['name'], // ID
+            this.state.schema['fields'][3]['name'], // Name
         ]
         let hasFilters = {}
-        hasFilters[this.state.schema['fields'][2]['name']] = sortedTags.map(values => {return values[0].toUpperCase()}) // Tags
-        hasFilters[this.state.schema['fields'][3]['name']] = sortedDifficulty // Difficulty
+        hasFilters[this.state.schema['fields'][4]['name']] = sortedTags.map(values => {return values[0].toUpperCase()}) // Tags
+        hasFilters[this.state.schema['fields'][5]['name']] = sortedDifficulty // Difficulty
 
         const hasSort = [
-            this.state.schema['fields'][4]['name'], // Numbers Solved
-            this.state.schema['fields'][6]['name'], // Time Limit
-            this.state.schema['fields'][7]['name'], // Memory Limit
+            this.state.schema['fields'][6]['name'], // Numbers Solved
+            this.state.schema['fields'][8]['name'], // Time Limit
+            this.state.schema['fields'][9]['name'], // Memory Limit
         ]
-        this.state.schema['fields'].forEach(col => {
+        
+        this.state.schema['fields'].slice(2,).forEach(col => {
             let columnRules = {};
             if(hasSearch.includes(col['name'])) {
                 columnRules = {
@@ -192,15 +193,14 @@ export default class Home extends Component {
         return difficulties.sort((a, b) => a - b)
     }
 
-    onSelectChange = (selectedRowKeys, selectedRows) => {
-        console.log('on select change: ', selectedRowKeys, selectedRows);
+    onSelectChange = (selectedRowKeys) => {
         this.setState({ selectedRowKeys });
     };
 
     componentDidMount = () => {
-        let selectedRowKeys = []
+        let selectedRowKeys = [] // sets all the completed to be checked
         this.state.data.forEach((val, key) => {
-            if(val['ID'].toLowerCase().includes('a')) {
+            if(val['Completed'] == 1) {
                 selectedRowKeys = [...selectedRowKeys, key]
             }
         })
@@ -210,16 +210,18 @@ export default class Home extends Component {
 
     render() {
         const  { selectedRowKeys } = this.state;
-        console.log(selectedRowKeys)
+        
         // rowSelection object indicates the need for row selection
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
             onSelect: (record, selected, selectedRows) => {
-              console.log(record, selected, selectedRows);
+                // change completed value on file and put timestamp
             },
-            onSelectAll: (selected, selectedRows, changeRows) => {
-              console.log(selected, selectedRows, changeRows);
+            onSelectAll: () => {
+                let selectedRowKeys = []
+                if(this.state.selectedRowKeys.length != this.state.data.length) selectedRowKeys = this.state.data.map(data => data.index)
+                this.setState({ selectedRowKeys })
             },
         };
 
