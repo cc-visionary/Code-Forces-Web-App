@@ -10,6 +10,7 @@ export default class Home extends Component {
         this.state = {
            data: props.data.data,
            schema: props.data.schema,
+           selectedRowKeys: [], // Check here to configure the default column
         };
     }; 
 
@@ -22,11 +23,36 @@ export default class Home extends Component {
             'Page URL': link => <a href={link.replace('//problemset', '/problemset')} target='_blank' rel="noopener noreferrer">{link.replace('//problemset', '/problemset')}</a>,
             'Tags': cats => cats.split(',').map(tag => {
                 let color = ''
-                tagColorEquivalent.forEach((clr, key) => {
-                    if(sortedTags[key][0] === tag) color = clr
+                sortedTags.forEach((clr, key) => {
+                    if(clr[0] === tag) {
+                        color = parseInt((1 - key / sortedTags.length) * 255)
+                    }
                 })
-                return <Tag color={color} key={tag}>{tag.toUpperCase()}</Tag>
-            })
+                const red = 0
+                const green = String(255 - color) 
+                const blue = color
+                return <Tag style={{
+                    backgroundColor: 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.1)', 
+                    color: 'rgb(' + red + ', ' + green + ', ' + blue + ')', 
+                    borderColor: 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.5)'
+                }} key={tag}>{tag.toUpperCase()}</Tag>
+            }),
+            'Difficulty': tag => {
+                let color = ''
+                sortedDifficulty.forEach((clr, key) => {
+                    if(Number(clr) === Number(tag)) {
+                        color = parseInt(key / sortedDifficulty.length * 255)
+                    }
+                })
+                const red = 0
+                const green = String(255 - color) 
+                const blue = color
+                return <Tag style={{
+                    backgroundColor: 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.1)', 
+                    color: 'rgb(' + red + ', ' + green + ', ' + blue + ')', 
+                    borderColor: 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.5)'
+                }} key={tag}>{tag}</Tag>
+            }
         }
         const hasSearch = [
             this.state.schema['fields'][0]['name'], // ID
@@ -35,14 +61,12 @@ export default class Home extends Component {
         let hasFilters = {}
         hasFilters[this.state.schema['fields'][2]['name']] = sortedTags.map(values => {return values[0].toUpperCase()}) // Tags
         hasFilters[this.state.schema['fields'][3]['name']] = sortedDifficulty // Difficulty
-        console.log(hasFilters)
 
         const hasSort = [
             this.state.schema['fields'][4]['name'], // Numbers Solved
             this.state.schema['fields'][6]['name'], // Time Limit
             this.state.schema['fields'][7]['name'], // Memory Limit
         ]
-        console.log(sortedDifficulty)
         this.state.schema['fields'].forEach(col => {
             let columnRules = {};
             if(hasSearch.includes(col['name'])) {
@@ -168,20 +192,35 @@ export default class Home extends Component {
         return difficulties.sort((a, b) => a - b)
     }
 
+    onSelectChange = (selectedRowKeys, selectedRows) => {
+        console.log('on select change: ', selectedRowKeys, selectedRows);
+        this.setState({ selectedRowKeys });
+    };
+
     componentDidMount = () => {
+        let selectedRowKeys = []
+        this.state.data.forEach((val, key) => {
+            if(val['ID'].toLowerCase().includes('a')) {
+                selectedRowKeys = [...selectedRowKeys, key]
+            }
+        })
+        this.setState({ selectedRowKeys })
     };
     
 
     render() {
+        const  { selectedRowKeys } = this.state;
+        console.log(selectedRowKeys)
         // rowSelection object indicates the need for row selection
         const rowSelection = {
-            onChange: (selectedRowKeys, selectedRows) => {
-                console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
+            selectedRowKeys,
+            onChange: this.onSelectChange,
+            onSelect: (record, selected, selectedRows) => {
+              console.log(record, selected, selectedRows);
             },
-            getCheckboxProps: record => ({
-                disabled: record['ID'] === 'Disabled User', // Column configuration not to be checked
-                name: record['ID'],
-            }),
+            onSelectAll: (selected, selectedRows, changeRows) => {
+              console.log(selected, selectedRows, changeRows);
+            },
         };
 
         const columns = this.setColumns()
@@ -193,9 +232,10 @@ export default class Home extends Component {
                 <Table 
                     size='middle'
                     pagination={{pageSize: 16}}
-                    rowSelection={{...rowSelection}} 
+                    rowSelection={rowSelection} 
                     columns={columns} 
                     dataSource={this.state.data} 
+                    rowKey={record => record.index}
                 />
             </div>
         )
