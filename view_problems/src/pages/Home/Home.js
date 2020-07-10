@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import { Menu, Table, Tag, Space, Button, Input } from 'antd'
+import moment from 'moment'
 import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined } from '@ant-design/icons';
-import 'antd/dist/antd.css';
 import RandomSettings from '../../components/RandomSettings/RandomSettings'
 import './Home.css';
+import 'antd/dist/antd.css';
 
 const { SubMenu } = Menu;
 
@@ -16,16 +17,16 @@ export default class Home extends Component {
            selectedRowKeys: [], // Check here to configure the default column
            searchText: '',
            searchedColumn: '',
-           randomSettingsVisible: false
+           randomSettingsVisible: false,
         };
     }; 
 
     setColumns = () => {
         const columns = []
-        const [ sortedTags, sortedDifficulty, sortedTimeLimit, sortedMemLimit ]  = this.sortTagsDiffTimeMem()
+        const [ sortedTags, sortedDifficulty ]  = this.sortTagsDiffTimeMem()
         const renders = {
             'Page URL': link => <a href={link.replace('//problemset', '/problemset')} target='_blank' rel="noopener noreferrer">{link.replace('//problemset', '/problemset')}</a>,
-            'Tags': cats => cats.split(',').map(tag => {
+            'Tags': cats => cats.split('|').map(tag => {
                 let color = ''
                 sortedTags.forEach((clr, key) => {
                     if(clr[0] === tag) {
@@ -36,9 +37,9 @@ export default class Home extends Component {
                 const green = String(255 - color) 
                 const blue = color
                 return <Tag style={{
-                    backgroundColor: 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.1)', 
-                    color: 'rgb(' + red + ', ' + green + ', ' + blue + ')', 
-                    borderColor: 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.5)'
+                    backgroundColor: `rgba(${red},${green},${blue}, 0.1)`, 
+                    color: `rgb(${red},${green},${blue})`, 
+                    borderColor: `rgba(${red},${green},${blue}, 0.5)`
                 }} key={tag}>{tag.toUpperCase()}</Tag>
             }),
             'Difficulty': tag => {
@@ -181,7 +182,7 @@ export default class Home extends Component {
         let memoryLimit = []
         this.state.data.forEach(d => {
             if(d['Tags'] !== null && d['Tags'] !== '') {
-                d['Tags'].split(',').forEach(tag => {
+                d['Tags'].split('|').forEach(tag => {
                     if(tag !== '') {
                         if(Object.keys(nTags).includes(tag)) nTags[tag] += 1
                         else nTags[tag] = 0
@@ -200,6 +201,8 @@ export default class Home extends Component {
     }
 
     onSelectChange = (selectedRowKeys) => {
+        const today = new Date()
+        console.log(moment(`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()} ${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`, 'YYYY-MM-DD HH:mm:ss'))
         this.setState({ selectedRowKeys });
     };
 
@@ -218,7 +221,7 @@ export default class Home extends Component {
     componentDidMount = () => {
         let selectedRowKeys = [] // sets all the completed to be checked
         this.state.data.forEach((val, key) => {
-            if(val['Completed'] == 1) {
+            if(val['Completed'] === 1) {
                 selectedRowKeys = [...selectedRowKeys, key]
             }
         })
@@ -233,11 +236,12 @@ export default class Home extends Component {
             selectedRowKeys,
             onChange: this.onSelectChange,
             onSelect: (record, selected, selectedRows) => {
+                console.log(record)
                 // change completed value on file and put timestamp
             },
             onSelectAll: () => {
                 let selectedRowKeys = []
-                if(this.state.selectedRowKeys.length != this.state.data.length) selectedRowKeys = this.state.data.map(data => data.index)
+                if(this.state.selectedRowKeys.length !== this.state.data.length) selectedRowKeys = this.state.data.map(data => data.index)
                 this.setState({ selectedRowKeys })
             },
         };
@@ -275,7 +279,7 @@ export default class Home extends Component {
                     rowSelection={rowSelection} 
                     columns={columns} 
                     dataSource={this.state.data} 
-                    rowKey={record => record.index}
+                    rowKey={row => row.ID}
                 />
                 <RandomSettings 
                     visible={this.state.randomSettingsVisible}

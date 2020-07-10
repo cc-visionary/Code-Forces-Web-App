@@ -1,16 +1,29 @@
-import React from 'react';
+import React, { Component } from 'react';
+import axios from 'axios';
 import './App.css';
 
 import Home from './pages/Home/Home';
 
-import data from './data/codeforces_problems.json'
+export default class App extends Component {
+  constructor(props) {
+    super(props)
+  
+    this.state = {
+       
+    };
+  };
 
-function App() {
-  return (
-    <div className="App">
-      <Home data={data} />
-    </div>
-  );
+  componentDidMount = () => {
+    
+  };
+
+  render() {
+    return (
+      <div className="App">
+        <Home data={data} />
+      </div>
+    );
+  }
 }
 
 export default App;
