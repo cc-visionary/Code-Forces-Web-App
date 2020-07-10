@@ -1,23 +1,25 @@
 const express = require('express')
 const mysql = require('mysql')
+const bodyParser = require("body-parser");
+const cors = require("cors");
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 8080
 
 const app = express()
 
-const connection = mysql.createConnection({
-    host:'sql12.freesqldatabase.com',
-    user:'sql12353831',
-    database:'sql12353831',
-    password:'Y4jgHbkEtI',
-    port:'3306'
-})
+var corsOptions = {
+    origin: "http://localhost:3000"
+};
 
-connection.connect((err) => {
-    err ? console.log(err) : console.log(connection);
-})
+app.use(cors(corsOptions));
 
-require('./routes/html-routes')(app, connection);
+// parse requests of content-type - application/json
+app.use(bodyParser.json());
+
+// parse requests of content-type - application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }));
+
+require("./routes/problems.routes")(app);
 app.listen(PORT, () => {
     console.log(`App running on Port ${PORT}`)
 })
