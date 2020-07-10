@@ -281,6 +281,7 @@ export default class Home extends Component {
                 <Table 
                     loading={this.state.loadingTable}
                     size='middle'
+                    pagination={{pageSize:14}}
                     rowSelection={rowSelection} 
                     columns={columns} 
                     dataSource={this.state.data} 
