@@ -12,8 +12,9 @@ export default class Home extends Component {
     constructor(props) {
         super(props)
         this.state = {
-           data: props.data.data,
-           schema: props.data.schema,
+           data: [],
+           columns: ['ID', 'Problem ID', 'Name', 'Tags', 'Difficulty', 'Number Solved', 'Page URL', 'Time Limit', 'Memory Limit', 'Completed', 'Completion Date'],
+           loadingTable: true,
            selectedRowKeys: [], // Check here to configure the default column
            searchText: '',
            searchedColumn: '',
@@ -22,7 +23,7 @@ export default class Home extends Component {
     }; 
 
     setColumns = () => {
-        const columns = []
+        let columns = []
         const [ sortedTags, sortedDifficulty ]  = this.sortTagsDiffTimeMem()
         const renders = {
             'Page URL': link => <a href={link.replace('//problemset', '/problemset')} target='_blank' rel="noopener noreferrer">{link.replace('//problemset', '/problemset')}</a>,
@@ -60,53 +61,54 @@ export default class Home extends Component {
             }
         }
         const hasSearch = [
-            this.state.schema['fields'][2]['name'], // ID
-            this.state.schema['fields'][3]['name'], // Name
+            this.state.columns[1], // ID
+            this.state.columns[2], // Name
         ]
         let hasFilters = {}
-        hasFilters[this.state.schema['fields'][4]['name']] = sortedTags.map(values => {return values[0].toUpperCase()}) // Tags
-        hasFilters[this.state.schema['fields'][5]['name']] = sortedDifficulty // Difficulty
+        hasFilters[this.state.columns[3]] = sortedTags.map(values => {return values[0].toUpperCase()}) // Tags
+        hasFilters[this.state.columns[4]] = sortedDifficulty // Difficulty
 
         const hasSort = [
-            this.state.schema['fields'][6]['name'], // Numbers Solved
-            this.state.schema['fields'][8]['name'], // Time Limit
-            this.state.schema['fields'][9]['name'], // Memory Limit
+            this.state.columns[5], // Numbers Solved
+            this.state.columns[7], // Time Limit
+            this.state.columns[8], // Memory Limit
         ]
         
-        this.state.schema['fields'].slice(2,).forEach(col => {
+        this.state.columns.slice(1,-2).forEach(col => {
             let columnRules = {};
-            if(hasSearch.includes(col['name'])) {
+            const col_id = col.toLowerCase().replace(' ', '_')
+            if(hasSearch.includes(col)) {
                 columnRules = {
-                    title: col['name'],
-                    dataIndex: col['name'],
-                    key: col['name'].toLowerCase().replace(' ', '_'),
-                    render: Object.keys(renders).includes(col['name']) ? renders[col['name']] : text => <div>{text}</div>,
-                    ...this.getColumnSearchProps(col['name']),
+                    title: col,
+                    dataIndex: col_id,
+                    key: col_id,
+                    render: Object.keys(renders).includes(col) ? renders[col] : text => <div>{text}</div>,
+                    ...this.getColumnSearchProps(col_id),
                 }
-            } else if(Object.keys(hasFilters).includes(col['name'])) {
+            } else if(Object.keys(hasFilters).includes(col)) {
                 columnRules = {
-                    title: col['name'],
-                    dataIndex: col['name'],
-                    key: col['name'].toLowerCase().replace(' ', '_'),
-                    render: Object.keys(renders).includes(col['name']) ? renders[col['name']] : text => <div>{text}</div>,
-                    filters: hasFilters[col['name']].map(text => {return {text: text, value: typeof(text) == 'string' ? text.toLowerCase() : String(text)}}),
-                    onFilter: (value, record) => record[col['name']].indexOf(value) === 0,
+                    title: col,
+                    dataIndex: col_id,
+                    key: col_id,
+                    render: Object.keys(renders).includes(col) ? renders[col] : text => <div>{text}</div>,
+                    filters: hasFilters[col].map(text => {return {text: text, value: typeof(text) == 'string' ? text.toLowerCase() : String(text)}}),
+                    onFilter: (value, record) => record[col_id].indexOf(value) === 0,
                 }
-            } else if(hasSort.includes(col['name'])) {
+            } else if(hasSort.includes(col)) {
                 columnRules = {
-                    title: col['name'],
-                    dataIndex: col['name'],
-                    key: col['name'].toLowerCase().replace(' ', '_'),
-                    render: Object.keys(renders).includes(col['name']) ? renders[col['name']] : text => <div>{text}</div>,
+                    title: col,
+                    dataIndex: col_id,
+                    key: col_id,
+                    render: Object.keys(renders).includes(col) ? renders[col] : text => <div>{text}</div>,
                     defaultSortOrder: 'ascend',
-                    sorter: (a, b) => typeof(a[col['name']]) == 'string' ? b[col['name']].split(' ')[0] - a[col['name']].split(' ')[0] : Number(b[col['name']]) - Number(a[col['name']]),
+                    sorter: (a, b) => typeof(a[col_id]) == 'string' ? Number(b[col_id].split(' ')[0]) - Number(a[col_id].split(' ')[0]) : b[col_id] - a[col_id],
                 }
             } else {
                 columnRules = {
-                    'title': col['name'],
-                    'dataIndex': col['name'],
-                    'key': col['name'].toLowerCase().replace(' ', '_'),
-                    'render': Object.keys(renders).includes(col['name']) ? renders[col['name']] : text => <div>{text}</div>,
+                    'title': col,
+                    'dataIndex': col_id,
+                    'key': col_id,
+                    'render': Object.keys(renders).includes(col) ? renders[col] : text => <div>{text}</div>,
                 };
             }
             
@@ -145,8 +147,7 @@ export default class Home extends Component {
         </div>
         ),
         filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
-        onFilter: (value, record) =>
-        record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
+        onFilter: (value, record) => record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
         onFilterDropdownVisibleChange: visible => {
             if (visible) {
                 setTimeout(() => this.searchInput.select());
@@ -179,18 +180,18 @@ export default class Home extends Component {
         let nTags = {}
         let difficulties = []
         let timeLimit = []
-        let memoryLimit = []
+        let memoryLimit = []    
         this.state.data.forEach(d => {
-            if(d['Tags'] !== null && d['Tags'] !== '') {
-                d['Tags'].split('|').forEach(tag => {
+            if(d['tags'] !== null && d['tags'] !== '') {
+                d['tags'].split('|').forEach(tag => {
                     if(tag !== '') {
                         if(Object.keys(nTags).includes(tag)) nTags[tag] += 1
                         else nTags[tag] = 0
                     }
                 })
-            } else if(d['Difficulty'] !== null && d['Difficulty'] !== '' && !difficulties.includes(Number(d['Difficulty']))) difficulties.push(Number(d['Difficulty']))
-            else if(d['Time Limit'] !== null && d['Time Limit'] !== '' && !timeLimit.includes(Number(d['Time Limit']))) timeLimit.push(Number(d['Time Limit']))
-            else if(d['Memory Limit'] !== null && d['Memory Limit'] !== '' && !memoryLimit.includes(d['Memory Limit'])) memoryLimit.push(d['Memory Limit'])
+            } else if(d['difficulty'] !== null && !difficulties.includes(d['difficulty'])) difficulties.push(d['difficulty'])
+            else if(d['time_limit'] !== null && !timeLimit.includes(d['time_limit'])) timeLimit.push(d['time_limit'])
+            else if(d['memory_limit'] !== null && d['memory_limit'] !== '' && !memoryLimit.includes(d['memory_limit'])) memoryLimit.push(d['memory_limit'])
         })
         return [
             Object.entries(nTags).sort((first, second) => {return second[1] - first[1]}), 
@@ -219,6 +220,9 @@ export default class Home extends Component {
     };
     
     componentDidMount = () => {
+        fetch(`/api/problems/`)
+          .then(res => res.json())
+          .then(json => this.setState({data: json, loadingTable: false}))
         let selectedRowKeys = [] // sets all the completed to be checked
         this.state.data.forEach((val, key) => {
             if(val['Completed'] === 1) {
@@ -226,6 +230,7 @@ export default class Home extends Component {
             }
         })
         this.setState({ selectedRowKeys })
+
     };
 
     render() {
@@ -274,12 +279,12 @@ export default class Home extends Component {
                     </Menu.Item>
                 </Menu>
                 <Table 
+                    loading={this.state.loadingTable}
                     size='middle'
-                    pagination={{pageSize: 15}}
                     rowSelection={rowSelection} 
                     columns={columns} 
                     dataSource={this.state.data} 
-                    rowKey={row => row.ID}
+                    rowKey={row => row.problem_id}
                 />
                 <RandomSettings 
                     visible={this.state.randomSettingsVisible}

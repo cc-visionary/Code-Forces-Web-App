@@ -5,9 +5,12 @@ module.exports = app => {
 
     // Retrieve all Problems
     router.get("/", problems.findAll);
-
+    
     // Update a Problems with id
-    router.put("/:id", problems.update);
+    router.put("/:problem_id", problems.update);
+
+    // Retrieve a single Problem with id
+    router.get("/:problem_id", problems.findOne);
 
     app.use('/api/problems', router);
 }

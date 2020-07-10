@@ -8,21 +8,21 @@ export default class App extends Component {
     super(props)
   
     this.state = {
-       
+       data: [],
+       columns: [],
     };
   };
 
+
   componentDidMount = () => {
-    
   };
 
   render() {
+    console.log(this.state.columns)
     return (
       <div className="App">
-        <Home data={{}} />
+        <Home data={this.state.data} columns={this.state.columns} />
       </div>
     );
   }
 }
-
-export default App;
