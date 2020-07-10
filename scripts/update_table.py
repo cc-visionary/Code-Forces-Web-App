@@ -12,7 +12,7 @@ def updateTable():
     table_name = 'problems'
     try:
         cursor = connection.cursor()
-        column_names = ['id', 'name', 'tags', 'difficulty', 'number_solved', 'page_url', 'time_limit', 'memory_limit', 'completed', 'completion_date']
+        column_names = ['id', 'problem_id', 'name', 'tags', 'difficulty', 'number_solved', 'page_url', 'time_limit', 'memory_limit', 'completed', 'completion_date']
         cursor.execute('SELECT * FROM %s' % table_name)
         existing = cursor.fetchall()
         existing_ids = [exist[0] for exist in existing]
@@ -30,10 +30,10 @@ def updateTable():
                         # print(val, existing[ex_idx][i])
                         try:
                             val = '' if (str(val) == '0' or '0.0' in str(val)) else float(val)
-                            ex_val = '' if (str(existing[ex_idx][i]) == '0' or '0.0' in str(existing[ex_idx][i])) else float(existing[ex_idx][i])
+                            ex_val = '' if (str(existing[ex_idx][i + 1]) == '0' or '0.0' in str(existing[ex_idx][i + 1])) else float(existing[ex_idx][i + 1])
                         except:
                             val = '' if (str(val) == '0' or '0.0' in str(val)) else str(val)
-                            ex_val = '' if (str(existing[ex_idx][i]) == '0' or '0.0' in str(existing[ex_idx][i])) else str(existing[ex_idx][i])
+                            ex_val = '' if (str(existing[ex_idx][i + 1]) == '0' or '0.0' in str(existing[ex_idx][i + 1])) else str(existing[ex_idx][i + 1])
                         # print(val, ex_val)
                         if(val != ex_val):
                             print('[%s[%d]] needs {%s} to be updated to {%s}' % (values[0], ex_idx, ex_val, val))
@@ -48,7 +48,7 @@ def updateTable():
             # print(new_items)
             # 0, NULL means that we are settings the newly added values to completed = 0 and completion_date = NULL
             try:
-                cursor.executemany('INSERT INTO %s(%s) VALUES (%s)' % (table_name, ','.join(column_names), ','.join(['%s' for i in column_names])), new_items)
+                cursor.executemany('INSERT INTO %s(%s) VALUES (%s)' % (table_name, ','.join(column_names[1:]), ','.join(['%s' for i in column_names[1:]])), new_items)
                 connection.commit()
                 print("Added %d rows" % len(new_items))
             except Exception as e:
