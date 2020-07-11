@@ -15,6 +15,34 @@ exports.findAll = (req, res) => {
             });
         });
 };
+
+// Find all completed problems
+exports.viewComplete = (req, res) => {
+    Problems.findAll({ where: { 'completed': true } })
+        .then(data => {
+            res.send(data);
+        })
+        .catch(err => {
+            res.status(500).send({
+            message:
+                err.message || "Some error occurred while retrieving tutorials."
+            });
+        });
+};
+
+// Find all incomplete problems
+exports.viewIncomplete = (req, res) => {
+    Problems.findAll({ where: { 'completed': false } })
+        .then(data => {
+            res.send(data);
+        })
+        .catch(err => {
+            res.status(500).send({
+            message:
+                err.message || "Some error occurred while retrieving tutorials."
+            });
+        });
+};
   
 // Find a single problem with an problem_id
 exports.findOne = (req, res) => {
@@ -36,7 +64,7 @@ exports.update = (req, res) => {
 
     Problems.update(req.body, { where: { problem_id: id }})
         .then(data => {
-            res.send(data);
+            res.send(req.body);
         })
         .catch(err => {
             res.status(500).send({
@@ -45,17 +73,3 @@ exports.update = (req, res) => {
             });
         })
 };
-
-// Find all completed problems
-exports.findAllCompleted = (req, res) => {
-    Tutorial.findAll({ where: { completed: true } })
-      .then(data => {
-        res.send(data);
-      })
-      .catch(err => {
-        res.status(500).send({
-          message:
-            err.message || "Some error occurred while retrieving tutorials."
-        });
-      });
-  };

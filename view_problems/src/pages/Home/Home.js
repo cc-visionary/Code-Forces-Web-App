@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
-import { Menu, Table, Tag, Space, Button, Input } from 'antd'
+import { Menu, Modal, Table, Tag, Space, Button, Input, DatePicker } from 'antd'
 import moment from 'moment'
-import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined } from '@ant-design/icons';
+import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import RandomSettings from '../../components/RandomSettings/RandomSettings'
 import './Home.css';
 import 'antd/dist/antd.css';
 
 const { SubMenu } = Menu;
+const { confirm } = Modal;
 
 export default class Home extends Component {
     constructor(props) {
@@ -18,6 +19,10 @@ export default class Home extends Component {
            selectedRowKeys: [], // Check here to configure the default column
            searchText: '',
            searchedColumn: '',
+           selectRowVisible: false,
+           newSelect: [],
+           chosenDate: null,
+           chosenRecord: {},
            randomSettingsVisible: false,
         };
     }; 
@@ -92,7 +97,7 @@ export default class Home extends Component {
                     key: col_id,
                     render: Object.keys(renders).includes(col) ? renders[col] : text => <div>{text}</div>,
                     filters: hasFilters[col].map(text => {return {text: text, value: typeof(text) == 'string' ? text.toLowerCase() : String(text)}}),
-                    onFilter: (value, record) => record[col_id].indexOf(value) === 0,
+                    onFilter: (value, record) => String(record[col_id]) === String(value),
                 }
             } else if(hasSort.includes(col)) {
                 columnRules = {
@@ -201,36 +206,68 @@ export default class Home extends Component {
         ]
     }
 
-    onSelectChange = (selectedRowKeys) => {
+    onSelectChange = () => {
+        /**
+         * Triggers when a row is checked/unchecked
+         */
         const today = new Date()
-        console.log(moment(`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()} ${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`, 'YYYY-MM-DD HH:mm:ss'))
-        this.setState({ selectedRowKeys });
-    };
+        const chosenDate = moment(`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()} ${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`, 'YYYY-MM-DD')
+        const problem_id = this.state.chosenRecord['problem_id']
+        const changeValue = !this.state.chosenRecord['completed']
+        try {
+            var completed_date = changeValue === false ? null : this.state.chosenDate.format('YYYY-MM-DD') // if complete is turned to false, we should discard it's date
+        } catch {
+            var completed_date = chosenDate
+        }
 
-    showRandomSettings = () => {
-        this.setState({
-            randomSettingsVisible: true,
-        });
-    };
+        const selectedRowKeys = this.state.newSelect
+        console.log(selectedRowKeys)
 
-    closeRandomSettings = () => {
-        this.setState({
-            randomSettingsVisible: false,
-        });
-    };
-    
-    componentDidMount = () => {
-        fetch(`/api/problems/`)
-          .then(res => res.json())
-          .then(json => this.setState({data: json, loadingTable: false}))
-        let selectedRowKeys = [] // sets all the completed to be checked
-        this.state.data.forEach((val, key) => {
-            if(val['Completed'] === 1) {
-                selectedRowKeys = [...selectedRowKeys, key]
+        fetch(`api/problems/${problem_id}`,  {
+            method: 'put',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                'completed': changeValue,
+                'completion_date': completed_date
+            })
+        }).then(
+            () => {
+                let data = this.state.data
+                for( let i = 0; i < data.length; i++ ) {
+                    if(data[i]['problem_id'] === problem_id) {
+                        data[i]['completed'] = changeValue
+                        data[i]['completion_date'] = completed_date
+                        break
+                    }
+                }
+                this.setState({ data, selectedRowKeys, chosenDate, selectRowVisible: false });
             }
-        })
-        this.setState({ selectedRowKeys })
+        )
+    };
 
+    fetchUpdateAll = () => {
+        fetch('/api/problems/')
+            .then(res => res.json())
+            .then(json => {
+                this.setState({data: json, loadingTable: false})
+                return json // pass the json data unto the next
+            })
+            .then(json => { 
+                let selectedRowKeys = [] // sets all the completed to be checked
+                json.forEach(val => {
+                    if(val['completed'] === true) {
+                        selectedRowKeys = [...selectedRowKeys, val['problem_id']]
+                    }
+                })
+                this.setState({ selectedRowKeys })
+             })
+    }
+
+    componentDidMount = () => {
+        this.fetchUpdateAll()
     };
 
     render() {
@@ -239,16 +276,14 @@ export default class Home extends Component {
         // rowSelection object indicates the need for row selection
         const rowSelection = {
             selectedRowKeys,
-            onChange: this.onSelectChange,
-            onSelect: (record, selected, selectedRows) => {
-                console.log(record)
-                // change completed value on file and put timestamp
-            },
+            onChange: (newSelect) => this.setState({ selectRowVisible: true, newSelect }),
+            onSelect: (record) => this.setState({ chosenRecord: record }),
             onSelectAll: () => {
                 let selectedRowKeys = []
                 if(this.state.selectedRowKeys.length !== this.state.data.length) selectedRowKeys = this.state.data.map(data => data.index)
                 this.setState({ selectedRowKeys })
             },
+            hideSelectAll: true
         };
 
         const columns = this.setColumns()
@@ -259,7 +294,7 @@ export default class Home extends Component {
                 <br/>
                 <h1>Codeforces Problems</h1>
                 <Menu style={{display: 'flex', justifyContent: 'flex-end'}} mode="horizontal">
-                    <Menu.Item onClick={this.showRandomSettings} key="random" icon={<CaretRightOutlined />}>
+                    <Menu.Item onClick={() => this.setState({ randomSettingsVisible: true })} key="random" icon={<CaretRightOutlined />}>
                         Choose Random
                     </Menu.Item>
                     <SubMenu icon={<PieChartOutlined />} title="Statistics">
@@ -289,12 +324,22 @@ export default class Home extends Component {
                 />
                 <RandomSettings 
                     visible={this.state.randomSettingsVisible}
-                    closeRandomSettings={this.closeRandomSettings}
+                    closeRandomSettings={() => this.setState({randomSettingsVisible: false})}
                     sortedTags={sortedTags} 
                     sortedDifficulty={sortedDifficulty} 
                     sortedTimeLimit={sortedTimeLimit} 
                     sortedMemLimit={sortedMemLimit} 
                 />
+                <Modal
+                    visible={this.state.selectRowVisible}
+                    title={`Are you sure you want to change the value of ${this.state.chosenRecord['problem_id']} to ${!this.state.chosenRecord['completed']}?`}
+                    icon={<ExclamationCircleOutlined />}
+                    maskClosable={true}
+                    onOk={this.onSelectChange.bind(this)}
+                    onCancel={() => this.setState({ selectRowVisible: false })}
+                >
+                    <DatePicker style={{display: 'flex'}} value={this.state.chosenDate} onChange={(chosenDate) => this.setState({ chosenDate })} />
+                </Modal>
             </div>
         )
     }
