@@ -14,7 +14,7 @@ export default class Home extends Component {
         super(props)
         this.state = {
            data: [],
-           columns: ['ID', 'Problem ID', 'Name', 'Tags', 'Difficulty', 'Number Solved', 'Page URL', 'Time Limit', 'Memory Limit', 'Completed', 'Completion Date'],
+           columns: ['ID', 'Problem ID', 'Name', 'Tags', 'Difficulty', 'Number Solved', 'Time Limit', 'Memory Limit', 'Page URL', 'Completed', 'Completion Date'],
            loadingTable: true,
            selectedRowKeys: [], // Check here to configure the default column
            searchText: '',
@@ -31,7 +31,6 @@ export default class Home extends Component {
         let columns = []
         const [ sortedTags, sortedDifficulty ]  = this.sortTagsDiffTimeMem()
         const renders = {
-            'Page URL': link => <a href={link.replace('//problemset', '/problemset')} target='_blank' rel="noopener noreferrer">{link.replace('//problemset', '/problemset')}</a>,
             'Tags': cats => cats.split('|').map(tag => {
                 let color = ''
                 sortedTags.forEach((clr, key) => {
@@ -63,7 +62,8 @@ export default class Home extends Component {
                     color: 'rgb(' + red + ', ' + green + ', ' + blue + ')', 
                     borderColor: 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.5)'
                 }} key={tag}>{tag}</Tag>
-            }
+            },
+            'Page URL': link => <a href={link.replace('//problemset', '/problemset')} style={{color: ''}} target='_blank' rel="noopener noreferrer">View Page</a>,
         }
         const hasSearch = [
             this.state.columns[1], // ID
@@ -75,8 +75,8 @@ export default class Home extends Component {
 
         const hasSort = [
             this.state.columns[5], // Numbers Solved
-            this.state.columns[7], // Time Limit
-            this.state.columns[8], // Memory Limit
+            this.state.columns[6], // Time Limit
+            this.state.columns[7], // Memory Limit
         ]
         
         this.state.columns.slice(1,-2).forEach(col => {
@@ -316,13 +316,14 @@ export default class Home extends Component {
                 <Table 
                     loading={this.state.loadingTable}
                     size='middle'
-                    pagination={{pageSize:14}}
+                    pagination={{pageSize:15}}
                     rowSelection={rowSelection} 
                     columns={columns} 
                     dataSource={this.state.data} 
                     rowKey={row => row.problem_id}
                 />
                 <RandomSettings 
+                    data={this.state.data}
                     visible={this.state.randomSettingsVisible}
                     closeRandomSettings={() => this.setState({randomSettingsVisible: false})}
                     sortedTags={sortedTags} 
