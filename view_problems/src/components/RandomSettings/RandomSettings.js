@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import moment from 'moment';
 import { Drawer, Form, Select, Col, Row, DatePicker, Button, InputNumber, Typography } from 'antd'
+import { ResponsiveRadar } from '@nivo/radar'
 
 const { Option } = Select;
 const { Text } = Typography
@@ -23,44 +24,68 @@ export default class RandomSettings extends Component {
     };
     
     componentWillReceiveProps = (nextProps) => {
-        this.setState({ data: nextProps.data, filtered: nextProps.data });  
+        this.filterData('difficulty', ['all'], nextProps.data)
+        this.setState({ data: nextProps.data });  
     }
 
-    filterData = (col_id, values) => {
+    filterData = (col_id, values, data=this.state.data) => {
         const { number_solved, completed, difficulty, problem_id, tags, time_limit, memory_limit  } = this.state
-        let filtered = this.state.data
-        
+        let filtered = data
+
+        const number_solved_filters = col_id === 'number_solved' ? values : number_solved
+        filtered = filtered.filter(d => d['number_solved'] >= number_solved_filters)
+
+        const completed_filters = col_id === 'completed' ? values : completed
+        if(completed_filters === 'yes')
+            filtered = filtered.filter(d => d['completed'] === true)
+        else if(completed_filters === 'no')
+            filtered = filtered.filter(d => d['completed'] === false)
+
         const diff_filters = col_id === 'difficulty' ? values : difficulty
-        filtered = filtered.filter(d => values.includes(d['difficulty']) || values.includes('all'))
+        filtered = filtered.filter(d => diff_filters.includes(d['difficulty']) || diff_filters.includes('all'))
+
+        const problem_id_filters = col_id === 'problem_id' ? values : problem_id
+        // loop through each char, find if there's 'a', 'b', etc.
+        filtered = filtered.filter(d => (d['problem_id'].toLowerCase().split('').map(char => problem_id_filters.includes(char))).includes(true) || problem_id_filters.includes('all') )
+
+        const tags_filters = col_id === 'tags' ? values : tags
+        filtered = filtered.filter(d => (d['tags'].split('|').map(char => tags_filters.includes(char)).includes(true) || tags_filters.includes('all')))
+
+        const time_limit_filters = col_id === 'time_limit' ? values : time_limit
+        filtered = filtered.filter(d => time_limit_filters.includes(d['time_limit']) || time_limit_filters.includes('all'))
+
+        const memory_limit_filters = col_id === 'memory_limit' ? values : memory_limit
+        filtered = filtered.filter(d => memory_limit_filters.includes(d['memory_limit']) || memory_limit_filters.includes('all'))
+
         this.setState({ filtered })
     }
 
     checkAll = (values) => {
-        // if(values.slice(-1) === 'all') { // chose all (result in deleting everything except result)
-        //     values = ['all']
-        // } else 
-        if(values.length > 1 && values.includes('all')) return values.splice(values.indexOf('all') - 1, 1) // choose something other than all (remove 'all' from the list)
-        else if(values.length === 0) return ['all'] // empty array (add 'all' to the array)
-        else return values
+        if(values.slice(-1)[0] === 'all') values.splice(0, values.length - 1) // chose all (result in deleting everything except result)
+        else if(values.length > 1 && values[0] === 'all') values.splice(0, 1) // choose something other than all (remove 'all' from the list)
+        else if(values.length === 0) values.push('all') // empty array (add 'all' to the array)
+        return values
     }
 
     changeNumberSolved = (number_solved) => {
+        this.filterData('number_solved', number_solved)
         this.setState({ number_solved }, () => this.state.number_solved)
     } 
 
     changeDifficulty = (difficulty) => {
         difficulty = this.checkAll(difficulty)
-        console.log(difficulty)
         this.filterData('difficulty', difficulty)
         this.setState({ difficulty })
     } 
 
     changeID = (problem_id) => {
         problem_id = this.checkAll(problem_id)
+        this.filterData('problem_id', problem_id)
         this.setState({ problem_id })
     } 
 
     changeCompleted = (completed) => {
+        this.filterData('completed', completed)
         this.setState({ completed })
     } 
 
@@ -72,17 +97,32 @@ export default class RandomSettings extends Component {
 
     changeTimeLimit = (time_limit) => {
         time_limit = this.checkAll(time_limit)
+        this.filterData('time_limit', time_limit)
         this.setState({ time_limit })
     } 
 
     changeMemoryLimit = (memory_limit) => {
         memory_limit = this.checkAll(memory_limit)
+        this.filterData('memory_limit', memory_limit)
         this.setState({ memory_limit })
     } 
 
     render() {
         const today = new Date()
-        
+
+        const tagsProportion = this.props.sortedTags.map(tag => {
+            return {
+                'count': this.state.filtered.filter(d => d['tags'].includes(tag[0])).length, 
+                'solved': this.state.filtered.filter(d => {
+                    if(d['tags'].includes(tag[0])) return d['number_solved']
+                    else return 0
+                }).reduce((a, b) => a + b), 
+                'id': tag[0]
+            }
+        })
+
+        console.log(tagsProportion)
+
         return (
             <Drawer 
                 title="Random Settings"
@@ -144,7 +184,7 @@ export default class RandomSettings extends Component {
                             name="completed"
                             label="Completed?"
                         >
-                            <Select defaultValue={this.state.completed} value={this.state.completed} onChange={(val) => this.changeComplete(val)} >
+                            <Select defaultValue={this.state.completed} value={this.state.completed} onChange={(val) => this.changeCompleted(val)} >
                                 <Option key='all' value='all'>All</Option>
                                 <Option key='yes' value='yes'>Yes</Option>
                                 <Option key='no' value='no'>No</Option>
@@ -204,6 +244,15 @@ export default class RandomSettings extends Component {
                                 { this.props.sortedMemLimit.map(mem => <Option key={mem} value={mem}>{mem}</Option>) }
                             </Select>
                         </Form.Item>
+                    </Col>
+                </Row>
+                <Row gutter={16}>
+                    <Col style={{position: 'absolute', width: '100%', height: '100%'}} span={12}>
+                        <ResponsiveRadar 
+                            data={tagsProportion}
+                            keys={[ 'count', 'solved' ]}
+                            indexBy="id"
+                        />
                     </Col>
                 </Row>
                 <Row gutter={16}>
