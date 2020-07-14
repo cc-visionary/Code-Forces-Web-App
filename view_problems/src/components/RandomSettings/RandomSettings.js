@@ -1,11 +1,25 @@
 import React, { Component } from 'react';
-import { Link } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import moment from 'moment';
 import { Drawer, Form, Select, Col, Row, DatePicker, Button, InputNumber, Typography } from 'antd'
 import { ResponsiveBar } from '@nivo/bar'
+import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
 const { Option } = Select;
 const { Title } = Typography
+
+function RunButton(props) {
+    let history = useHistory();
+  
+    const handleClick = () => {
+        history.push(`/random_results`, { randomProblems: props.randomProblems });
+    }
+
+    return (
+        <Button onClick={handleClick} block>Run</Button>
+    );
+}
+// onFinish={(values) => this.getRandom(values)}
 
 export default class RandomSettings extends Component {
     constructor(props) {
@@ -20,6 +34,7 @@ export default class RandomSettings extends Component {
             difficulty: ['all'],
             problem_id: ['all'],
             tags: ['all'],
+            mode: 'top',
             time_limit: ['all'],
             memory_limit: ['all']
         };
@@ -109,17 +124,24 @@ export default class RandomSettings extends Component {
         this.setState({ memory_limit })
     }
 
-    getRandom = (values) => {
-        let randomIDs = []
+    getRandomProblems = () => {
+        let randomProblems = []
+        let uniqueIDs = []
 
         // if mode "top" is chosen, then we will only get the top half of the filtered data
-        const indexChoices = values['mode'] === 'top' ? this.state.filtered.length / 2 : this.state.filtered.length
+        const indexChoices = this.state.mode === 'top' ? this.state.filtered.length / 2 : this.state.filtered.length
 
-        while(randomIDs.length < values['amount']) {
+        // push random problem to randomProblems array while its length is less than the desired length
+        while(randomProblems.length < this.state.amount) {
             let randomIndex = Math.floor(Math.random() * indexChoices)
-            if(!randomIDs.includes(randomIndex)) randomIDs.push(this.state.filtered[randomIndex]['problem_id'])
+            let randomID = this.state.filtered[randomIndex]['problem_id']
+            if(!uniqueIDs.includes(randomID)) {
+                uniqueIDs.push(randomID)
+                randomProblems.push(this.state.filtered[randomIndex])
+            }
         }
-        console.log(randomIDs)
+        
+        return randomProblems
     }
 
     render() {
@@ -131,20 +153,17 @@ export default class RandomSettings extends Component {
         const sumCount = tagCounts.length !== 0 ? tagCounts.reduce((a, b) => a + b) : 0
         const sumSolved = tagSolved.length !== 0 ? tagSolved.reduce((a, b) => a + b) : 0
 
+        // proportion statistics for barchart
         const proportionPerTag = this.props.sortedTags.map((tag, index) => {
             return {
                 'count': (tagCounts[index] / sumCount * 100).toFixed(2),
                 'solved': (tagSolved[index] / sumSolved * 100).toFixed(2),
-                'id': tag[0]
+                'id': tag[0].toUpperCase()
             }
         })
 
-        // const solvedProportionPerTag = this.props.sortedTags.map((tag, index) => {
-        //     return {
-        //         'value': (tagSolved[index] / sumSolved * 100).toFixed(2), 
-        //         'id': tag[0]
-        //     }
-        // })
+        // every render, get the random problems
+        const randomProblems = this.state.amount <= this.state.filtered.length ? this.getRandomProblems() : []
 
         return (
             <Drawer 
@@ -152,9 +171,8 @@ export default class RandomSettings extends Component {
                 width={1280}
                 onClose={this.props.closeRandomSettings}
                 visible={this.props.visible}
-                bodyStyle={{ paddingBottom: 80 }}
             >
-                <Form layout="vertical" onFinish={(values) => this.getRandom(values)} hideRequiredMark>
+                <Form layout="vertical" hideRequiredMark>
                     <Row gutter={16}>
                         <Col span={4}>
                             <Form.Item
@@ -240,7 +258,7 @@ export default class RandomSettings extends Component {
                                 label="Mode"
                                 initialValue={'top'}
                             >
-                                <Select defaultValue='top' >
+                                <Select value={this.state.mode} onChange={(mode) => this.setState({ mode })} >
                                     <Option key='top' value='top'>Top Solved</Option>
                                     <Option key='random' value='random'>Random</Option>
                                 </Select>
@@ -281,8 +299,8 @@ export default class RandomSettings extends Component {
                         </Col>
                     </Row>
                     <Row gutter={16}>
-                        <Col style={{maxHeight: '500px', maxWidth: '1280px'}} span={24}>
-                            <ResponsiveBar
+                        <Col style={{maxHeight: '400px', maxWidth: '1280px'}} span={24}>
+                            {/* <ResponsiveBar
                                 data={proportionPerTag}
                                 indexBy='id'
                                 keys={['count', 'solved']}
@@ -319,10 +337,25 @@ export default class RandomSettings extends Component {
                                         ]
                                     }
                                 ]}
-                            />
+                            /> */}
+                            <BarChart 
+                                height={480} 
+                                width={1200} 
+                                margin={{
+                                    top: 20, right: 50, left: 50, bottom: 90,
+                                }} 
+                                data={proportionPerTag}
+                            >
+                                <XAxis style={{fontSize: '12px'}} textAnchor='end' minTickGap={-150} angle={-40} height={50} dataKey="id" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend verticalAlign="top" />
+                                <Bar dataKey="count" stackId="a" fill="#8884d8" />
+                                <Bar dataKey="solved" stackId="a" fill="#82ca9d" />
+                            </BarChart>
                         </Col>
                     </Row>
-                    <Row gutter={16}>
+                    <Row style={{ marginTop: 70, marginBottom: 0 }} gutter={[16, 16]}>
                         <Col span={24}>
                             <Title level={3}>Number of Items to Choose from: {this.state.filtered.length}</Title>
                         </Col>
@@ -330,7 +363,7 @@ export default class RandomSettings extends Component {
                     <Row gutter={16}>
                         <Col span={24}>
                             <Form.Item>
-                                    <Button htmlType="submit" block>Run</Button>
+                                <RunButton htmlType="submit" randomProblems={randomProblems} />
                             </Form.Item>
                         </Col>
                     </Row>

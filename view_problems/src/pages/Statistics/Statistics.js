@@ -1,4 +1,5 @@
-import React, { Component } from 'react'
+import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
 
 import './Statistics.css'
 
@@ -13,7 +14,10 @@ export default class componentName extends Component {
     
     render() {
         return (
-            <div> Statistics </div>
+            <div>
+                <Link to='/'>Go back</Link>
+                <div> Statistics </div>
+            </div>
         );
     }
 }

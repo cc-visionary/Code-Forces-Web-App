@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom'
 import { Menu, Modal, Table, Tag, Space, Button, Input, DatePicker } from 'antd'
 import moment from 'moment'
 import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
@@ -7,7 +8,6 @@ import './Home.css';
 import 'antd/dist/antd.css';
 
 const { SubMenu } = Menu;
-const { confirm } = Modal;
 
 export default class Home extends Component {
     constructor(props) {
@@ -299,7 +299,9 @@ export default class Home extends Component {
                     </Menu.Item>
                     <SubMenu icon={<PieChartOutlined />} title="Statistics">
                         <Menu.ItemGroup title="Item 1">
-                            <Menu.Item key="setting:1">Option 1</Menu.Item>
+                            <Menu.Item key="setting:1">
+                                <Link to='/statistics/option-1'>Option 1</Link>
+                                </Menu.Item>
                             <Menu.Item key="setting:2">Option 2</Menu.Item>
                         </Menu.ItemGroup>
                         <Menu.ItemGroup title="Item 2">
@@ -315,8 +317,8 @@ export default class Home extends Component {
                 </Menu>
                 <Table 
                     loading={this.state.loadingTable}
-                    size='middle'
-                    pagination={{pageSize:15}}
+                    size='small'
+                    pagination={{pageSize:18}}
                     rowSelection={rowSelection} 
                     columns={columns} 
                     dataSource={this.state.data} 
