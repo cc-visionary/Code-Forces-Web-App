@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
+import { Link } from "react-router-dom";
 import moment from 'moment';
 import { Drawer, Form, Select, Col, Row, DatePicker, Button, InputNumber, Typography } from 'antd'
-import { ResponsiveRadar } from '@nivo/radar'
+import { ResponsiveBar } from '@nivo/bar'
 
 const { Option } = Select;
-const { Text } = Typography
+const { Title } = Typography
 
 export default class RandomSettings extends Component {
     constructor(props) {
@@ -13,6 +14,7 @@ export default class RandomSettings extends Component {
         this.state = {
             data: [],
             filtered: [],
+            amount: 5,
             number_solved: 0,
             completed: 'no',
             difficulty: ['all'],
@@ -105,164 +107,233 @@ export default class RandomSettings extends Component {
         memory_limit = this.checkAll(memory_limit)
         this.filterData('memory_limit', memory_limit)
         this.setState({ memory_limit })
-    } 
+    }
+
+    getRandom = (values) => {
+        let randomIDs = []
+
+        // if mode "top" is chosen, then we will only get the top half of the filtered data
+        const indexChoices = values['mode'] === 'top' ? this.state.filtered.length / 2 : this.state.filtered.length
+
+        while(randomIDs.length < values['amount']) {
+            let randomIndex = Math.floor(Math.random() * indexChoices)
+            if(!randomIDs.includes(randomIndex)) randomIDs.push(this.state.filtered[randomIndex]['problem_id'])
+        }
+        console.log(randomIDs)
+    }
 
     render() {
-        const today = new Date()
+        const today = moment(`${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`, 'YYYY-MM-DD')
+        
+        const tagCounts = this.props.sortedTags.map(tag => this.state.filtered.filter(d => d['tags'].includes(tag[0])).length)
+        const tagSolved = this.props.sortedTags.map(tag => this.state.filtered.map(d => d['tags'].includes(tag[0]) ? d['number_solved'] : 0).reduce((a, b) => a + b))
 
-        const tagsProportion = this.props.sortedTags.map(tag => {
+        const sumCount = tagCounts.length !== 0 ? tagCounts.reduce((a, b) => a + b) : 0
+        const sumSolved = tagSolved.length !== 0 ? tagSolved.reduce((a, b) => a + b) : 0
+
+        const proportionPerTag = this.props.sortedTags.map((tag, index) => {
             return {
-                'count': this.state.filtered.filter(d => d['tags'].includes(tag[0])).length, 
-                'solved': this.state.filtered.filter(d => {
-                    if(d['tags'].includes(tag[0])) return d['number_solved']
-                    else return 0
-                }).reduce((a, b) => a + b), 
+                'count': (tagCounts[index] / sumCount * 100).toFixed(2),
+                'solved': (tagSolved[index] / sumSolved * 100).toFixed(2),
                 'id': tag[0]
             }
         })
 
-        console.log(tagsProportion)
+        // const solvedProportionPerTag = this.props.sortedTags.map((tag, index) => {
+        //     return {
+        //         'value': (tagSolved[index] / sumSolved * 100).toFixed(2), 
+        //         'id': tag[0]
+        //     }
+        // })
 
         return (
             <Drawer 
                 title="Random Settings"
-                width={720}
+                width={1280}
                 onClose={this.props.closeRandomSettings}
                 visible={this.props.visible}
                 bodyStyle={{ paddingBottom: 80 }}
             >
-                <Form layout="vertical" hideRequiredMark>
-                <Row gutter={16}>
-                    <Col span={4}>
-                        <Form.Item
-                            name="amount"
-                            label="Amount"
-                        >
-                            <InputNumber min={1} max={10} defaultValue={5} />
-                        </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                        <Form.Item
-                            name="number_solved"
-                            label="Number Solved"
-                        >
-                            <InputNumber min={0} max={10000} defaultValue={this.state.number_solved} value={this.state.number_solved} onChange={(val) => this.changeNumberSolved(val)} />
-                        </Form.Item>
-                    </Col>
-                    <Col span={16}>
-                        <Form.Item 
-                            name="difficulty"
-                            label="Difficulty"
-                        >
-                            <Select mode="multiple" defaultValue={this.state.difficulty} value={this.state.difficulty} onChange={(val) => this.changeDifficulty(val)} >
-                                <Option key='all' value='all'>All</Option>
-                                { this.props.sortedDifficulty.map(diff => <Option key={diff} value={diff}>{diff}</Option>) }
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                </Row>
-                <Row gutter={16}>
-                    <Col span={4}>
-                        <Form.Item
-                            name="id"
-                            label="ID"
-                        >
-                            <Select mode="multiple" defaultValue={this.state.problem_id} value={this.state.problem_id} onChange={(val) => this.changeID(val)} >
-                                <Option key='all' value='all'>All</Option>
-                                <Option key='a' value='a'>A</Option>
-                                <Option key='b' value='b'>B</Option>
-                                <Option key='c' value='c'>C</Option>
-                                <Option key='d' value='d'>D</Option>
-                                <Option key='e' value='e'>E</Option>
-                                <Option key='f' value='f'>F</Option>
-                                <Option key='g' value='g'>G</Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                        <Form.Item
-                            name="completed"
-                            label="Completed?"
-                        >
-                            <Select defaultValue={this.state.completed} value={this.state.completed} onChange={(val) => this.changeCompleted(val)} >
-                                <Option key='all' value='all'>All</Option>
-                                <Option key='yes' value='yes'>Yes</Option>
-                                <Option key='no' value='no'>No</Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                    <Col span={16}>
-                        <Form.Item
-                            name="tags"
-                            label="Tags"
-                        >
-                            <Select mode="multiple" defaultValue={this.state.tags} value={this.state.tags} onChange={(val) => this.changeTags(val)} >
-                                <Option value='all'>All</Option>
-                                { this.props.sortedTags.map(diff => <Option key={diff[0]} value={diff[0]}>{diff[0].toUpperCase()} ({diff[1]})</Option>) }
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                </Row>
-                <Row gutter={16}>
-                    <Col span={6}>
-                        <Form.Item
-                            name="mode"
-                            label="Mode"
-                        >
-                            <Select defaultValue='top' >
-                                <Option key='top' value='top'>Top Solved</Option>
-                                <Option key='random' value='random'>Random</Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                    <Col span={6}>
-                        <Form.Item
-                            name="date"
-                            label="Date"
-                        >
-                            <DatePicker defaultValue={moment(`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`, 'YYYY-MM-DD')} />
-                        </Form.Item>
-                    </Col>
-                    <Col span={6}>
-                        <Form.Item
-                            name="time_limit"
-                            label="Time Limit"
-                        >
-                            <Select mode="multiple" defaultValue={this.state.time_limit} value={this.state.time_limit} onChange={(val) => this.changeTimeLimit(val)} >
-                                <Option key='all' value='all'>All</Option>
-                                { this.props.sortedTimeLimit.map(time => <Option key={time} value={time}>{time}</Option>) }
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                    <Col span={6}>
-                        <Form.Item
-                            name="memory_limit"
-                            label="Memory Limit"
-                        >
-                            <Select mode="multiple" defaultValue={this.state.memory_limit} value={this.state.memory_limit} onChange={(val) => this.changeMemoryLimit(val)} >
-                                <Option key='all' value='all'>All</Option>
-                                { this.props.sortedMemLimit.map(mem => <Option key={mem} value={mem}>{mem}</Option>) }
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                </Row>
-                <Row gutter={16}>
-                    <Col style={{position: 'absolute', width: '100%', height: '100%'}} span={12}>
-                        <ResponsiveRadar 
-                            data={tagsProportion}
-                            keys={[ 'count', 'solved' ]}
-                            indexBy="id"
-                        />
-                    </Col>
-                </Row>
-                <Row gutter={16}>
-                    <Col span={12}>
-                        <Text>Number of Items to Choose from: {this.state.filtered.length}</Text>
-                    </Col>
-                    <Col span={12}>
-                        <Button>Run</Button>
-                    </Col>
-                </Row>
+                <Form layout="vertical" onFinish={(values) => this.getRandom(values)} hideRequiredMark>
+                    <Row gutter={16}>
+                        <Col span={4}>
+                            <Form.Item
+                                name="amount"
+                                label="Amount"
+                                initialValue={5}
+                                rules={[{ validator:(_, value) => value <= this.state.filtered.length ? Promise.resolve() : Promise.reject('Amount must be greater than or equal to the current number of filters.') }]}
+                            >
+                                <InputNumber style={{width: '100%'}} min={1} max={10} value={this.state.amount} onChange={(amount) => this.setState({ amount })} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item
+                                name="number_solved"
+                                label="Number Solved"
+                                initialValue={0}
+                            >
+                                <InputNumber style={{width: '100%'}} min={0} max={10000} value={this.state.number_solved} onChange={(val) => this.changeNumberSolved(val)} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={16}>
+                            <Form.Item 
+                                name="difficulty"
+                                label="Difficulty"
+                                initialValue={this.state.difficulty}
+                            >
+                                <Select mode="multiple" value={this.state.difficulty} onChange={(val) => this.changeDifficulty(val)} >
+                                    <Option key='all' value='all'>All</Option>
+                                    { this.props.sortedDifficulty.map(diff => <Option key={diff} value={diff}>{diff}</Option>) }
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={4}>
+                            <Form.Item
+                                name="id"
+                                label="ID"
+                                initialValue={this.state.problem_id}
+                            >
+                                <Select mode="multiple" value={this.state.problem_id} onChange={(val) => this.changeID(val)} >
+                                    <Option key='all' value='all'>All</Option>
+                                    <Option key='a' value='a'>A</Option>
+                                    <Option key='b' value='b'>B</Option>
+                                    <Option key='c' value='c'>C</Option>
+                                    <Option key='d' value='d'>D</Option>
+                                    <Option key='e' value='e'>E</Option>
+                                    <Option key='f' value='f'>F</Option>
+                                    <Option key='g' value='g'>G</Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={4}>
+                            <Form.Item
+                                name="completed"
+                                label="Completed?"
+                                initialValue={'all'}
+                            >
+                                <Select alue={this.state.completed} onChange={(val) => this.changeCompleted(val)} >
+                                    <Option key='all' value='all'>All</Option>
+                                    <Option key='yes' value='yes'>Yes</Option>
+                                    <Option key='no' value='no'>No</Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={16}>
+                            <Form.Item
+                                name="tags"
+                                label="Tags"
+                                initialValue={this.state.tags}
+                            >
+                                <Select mode="multiple" value={this.state.tags} onChange={(val) => this.changeTags(val)} >
+                                    <Option value='all'>All</Option>
+                                    { this.props.sortedTags.map(diff => <Option key={diff[0]} value={diff[0]}>{diff[0].toUpperCase()} ({diff[1]})</Option>) }
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={6}>
+                            <Form.Item
+                                name="mode"
+                                label="Mode"
+                                initialValue={'top'}
+                            >
+                                <Select defaultValue='top' >
+                                    <Option key='top' value='top'>Top Solved</Option>
+                                    <Option key='random' value='random'>Random</Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item
+                                name="date"
+                                label="Date"
+                                initialValue={today}
+                            >
+                                <DatePicker style={{width: '100%'}} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item
+                                name="time_limit"
+                                label="Time Limit"
+                                initialValue={this.state.time_limit}
+                            >
+                                <Select mode="multiple" value={this.state.time_limit} onChange={(val) => this.changeTimeLimit(val)} >
+                                    <Option key='all' value='all'>All</Option>
+                                    { this.props.sortedTimeLimit.map(time => <Option key={time} value={time}>{time}</Option>) }
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item
+                                name="memory_limit"
+                                label="Memory Limit"
+                                initialValue={this.state.memory_limit}
+                            >
+                                <Select mode="multiple" value={this.state.memory_limit} onChange={(val) => this.changeMemoryLimit(val)} >
+                                    <Option key='all' value='all'>All</Option>
+                                    { this.props.sortedMemLimit.map(mem => <Option key={mem} value={mem}>{mem}</Option>) }
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col style={{maxHeight: '500px', maxWidth: '1280px'}} span={24}>
+                            <ResponsiveBar
+                                data={proportionPerTag}
+                                indexBy='id'
+                                keys={['count', 'solved']}
+                                margin={{ top: 50, right: 130, bottom: 160, left: 60 }}
+                                labelSkipHeight={12}
+                                padding={0.3}
+                                axisLeft={{
+                                    format: value => value + '%'
+                                }}
+                                axisBottom={{
+                                    tickRotation: -90
+                                }}
+                                legends={[
+                                    {
+                                        dataFrom: 'id',
+                                        anchor: 'bottom-right',
+                                        direction: 'column',
+                                        justify: false,
+                                        translateX: 120,
+                                        translateY: 0,
+                                        itemsSpacing: 2,
+                                        itemWidth: 100,
+                                        itemHeight: 20,
+                                        itemDirection: 'left-to-right',
+                                        itemOpacity: 0.85,
+                                        symbolSize: 20,
+                                        effects: [
+                                            {
+                                                on: 'hover',
+                                                style: {
+                                                    itemOpacity: 1
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]}
+                            />
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={24}>
+                            <Title level={3}>Number of Items to Choose from: {this.state.filtered.length}</Title>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={24}>
+                            <Form.Item>
+                                    <Button htmlType="submit" block>Run</Button>
+                            </Form.Item>
+                        </Col>
+                    </Row>
                 </Form>
             </Drawer>
     );
