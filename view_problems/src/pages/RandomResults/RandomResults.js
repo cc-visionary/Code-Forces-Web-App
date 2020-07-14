@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { PageHeader, Card, Descriptions, Row, Col, Checkbox, Tag, Button } from 'antd';
+import { Modal, PageHeader, Card, Descriptions, Row, Col, Checkbox, Tag, Button } from 'antd';
 import QueueAnim from 'rc-queue-anim';
 
 export default class componentName extends Component {
@@ -7,18 +7,26 @@ export default class componentName extends Component {
         super(props)
         
         this.state = {
-            currentData: {},
-            solveModalVisible: false
+            currentData: {page_url:''},
+            solveProblemVisible: false,
+            timerState: 'Start',
         };
     };
 
     showModal = (currentData) => {
-        console.log(currentData)
-        this.setState({ currentData, solveModalVisible: true })
+        this.setState({ currentData, solveProblemVisible: true })
     }        
 
     hideModal = () => {
-        this.setState({ currentData: {}, solveModalVisible: false })
+        this.setState({ currentData: {page_url:''}, solveProblemVisible: false })
+    }
+
+    toggleTimer = () => {
+        if(this.state.timerState == 'Start') {
+            this.setState({ timerState: 'Stop' })
+        } else {
+            this.setState({ timerState: 'Start' })
+        }
     }
 
     render() {
@@ -41,12 +49,12 @@ export default class componentName extends Component {
                             <Col key={d['problem_id']} span={12}>
                                 <Card title={`${letters[letter_index]} - ${d['name']}`}>
                                     <Descriptions>
-                                        <Descriptions.Item span={1} label="Problem ID">{d['problem_id']}</Descriptions.Item>
-                                        <Descriptions.Item span={1} label="Number of Times Solved">{d['number_solved']}</Descriptions.Item>
-                                        <Descriptions.Item span={1} label="difficulty">{d['difficulty']}</Descriptions.Item>
-                                        <Descriptions.Item span={1} label="Time Limit">{d['time_limit']}</Descriptions.Item>
-                                        <Descriptions.Item span={1} label="Memory Limit">{d['memory_limit']}</Descriptions.Item>
-                                        <Descriptions.Item span={1} label="Completed"><Checkbox value={d['completed']} /></Descriptions.Item>
+                                        <Descriptions.Item label="Problem ID">{d['problem_id']}</Descriptions.Item>
+                                        <Descriptions.Item label="Number of Times Solved">{d['number_solved']}</Descriptions.Item>
+                                        <Descriptions.Item label="Difficulty">{d['difficulty']}</Descriptions.Item>
+                                        <Descriptions.Item label="Time Limit">{d['time_limit']}</Descriptions.Item>
+                                        <Descriptions.Item label="Memory Limit">{d['memory_limit']}</Descriptions.Item>
+                                        <Descriptions.Item label="Completed"><Checkbox value={d['completed']} /></Descriptions.Item>
                                         <Descriptions.Item span={3} label="Tags">{d['tags'].split('|').map(tag => <Tag>{tag.toUpperCase()}</Tag>)}</Descriptions.Item>
                                     </Descriptions>
                                     <Row gutter={16}>
@@ -64,6 +72,26 @@ export default class componentName extends Component {
                         )
                     })}
                 </QueueAnim>
+                <Modal
+                    width={1080}
+                    title={`Solved ${this.state.currentData['name']} (${this.state.currentData['problem_id']})`}
+                    visible={this.state.solveProblemVisible}
+                    onOk={this.hideModal}
+                    onCancel={this.hideModal}
+                    okText="Done"
+                    cancelText="Close"
+                >
+                    <Descriptions>
+                        <Descriptions.Item label="Number of Times Solved">{this.state.currentData['number_solved']}</Descriptions.Item>
+                        <Descriptions.Item label="Difficulty">{this.state.currentData['difficulty']}</Descriptions.Item>
+                        <Descriptions.Item label="Time Limit">{this.state.currentData['time_limit']}</Descriptions.Item>
+                        <Descriptions.Item label="Memory Limit">{this.state.currentData['memory_limit']}</Descriptions.Item>
+                        <Descriptions.Item label="Completed"><Checkbox value={this.state.currentData['completed']} /></Descriptions.Item>
+                        <Descriptions.Item><Button href={this.state.currentData['page_url'].replace('//problemset', '/problemset')} target='_blank' rel="noopener noreferrer" block>View Page</Button></Descriptions.Item>
+                    </Descriptions>
+                    <Button onClick={() => this.toggleTimer()}>{this.state.timerState}</Button>
+                    <Button primary>Reset</Button>
+                </Modal>
             </div>
         );
     }

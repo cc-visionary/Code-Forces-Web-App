@@ -291,7 +291,7 @@ export default class Home extends Component {
         return (
             <div className='home'>
                 <br/>
-                <h1>Codeforces Problems</h1>
+                <h1 style={{textAlign: 'center'}}>Codeforces Problems</h1>
                 <Menu style={{display: 'flex', justifyContent: 'flex-end'}} mode="horizontal">
                     <Menu.Item onClick={() => this.setState({ randomSettingsVisible: true })} key="random" icon={<CaretRightOutlined />}>
                         Choose Random
