@@ -28,8 +28,19 @@ export default class Home extends Component {
     }; 
 
     setColumns = () => {
+        /**
+         * Sets the column rules, components, etc.
+         * 
+         * Returns
+         * -------
+         * array of rules based on the rules set
+         */
         let columns = []
+
+        // calls this.sortTagsDiffTimeMem to get sortedTags and sortedDifficulty (to be able to get the correct colors for it's tags on the column)
         const [ sortedTags, sortedDifficulty ]  = this.sortTagsDiffTimeMem()
+
+        // sets the columns which has special renders
         const renders = {
             'Tags': cats => cats.split('|').map(tag => {
                 let color = ''
@@ -65,20 +76,26 @@ export default class Home extends Component {
             },
             'Page URL': link => <a href={link.replace('//problemset', '/problemset')} style={{color: ''}} target='_blank' rel="noopener noreferrer">View Page</a>,
         }
+
+        // sets the columns which will have a filter from the `search`
         const hasSearch = [
             this.state.columns[1], // ID
             this.state.columns[2], // Name
         ]
+
+        // sets the columns which will have a filter from the `drop down`
         let hasFilters = {}
         hasFilters[this.state.columns[3]] = sortedTags.map(values => {return values[0].toUpperCase()}) // Tags
         hasFilters[this.state.columns[4]] = sortedDifficulty // Difficulty
 
+        // sets the columns which will be sorted
         const hasSort = [
             this.state.columns[5], // Numbers Solved
             this.state.columns[6], // Time Limit
             this.state.columns[7], // Memory Limit
         ]
         
+        // loops indexes [1 - 7] of the data (does not include: id, completed, and completion_date)
         this.state.columns.slice(1,-2).forEach(col => {
             let columnRules = {};
             const col_id = col.toLowerCase().replace(' ', '_')
@@ -123,6 +140,9 @@ export default class Home extends Component {
     }
 
     getColumnSearchProps = dataIndex => ({
+        /**
+         * Search filter component for the table
+         */
         filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
             <Input
@@ -161,18 +181,20 @@ export default class Home extends Component {
     });
 
     handleSearch = (selectedKeys, confirm, dataIndex) => {
+        /**
+         * Handles the search by finding the indexes of items which contains the same
+         * values with the input
+         */
         confirm();
-        this.setState({
-            searchText: selectedKeys[0],
-            searchedColumn: dataIndex,
-        });
+        this.setState({ searchText: selectedKeys[0], searchedColumn: dataIndex });
     };
 
     handleReset = clearFilters => {
+        /**
+         * Resets the search filter
+         */
         clearFilters();
-        this.setState({
-            searchText: ''
-        });
+        this.setState({ searchText: '' });
     };
 
     sortTagsDiffTimeMem = () => {
@@ -181,6 +203,11 @@ export default class Home extends Component {
          * Sorts the tag base on occurence (sets it to this.state.sortedTags)
          * 
          * Find the unique Difficuly, Time Limit, and Memory limit then sort based on the value
+         * 
+         * Returns
+         * -------
+         * [arr of strings, arr of int, arr of int, arr of strinsg]
+         * [sortedTags, sortedDifficulties, sortedTimeLimit, sortedMemoryLimit]
          */
         let nTags = {}
         let difficulties = []
@@ -222,6 +249,7 @@ export default class Home extends Component {
 
         const selectedRowKeys = this.state.newSelect
 
+        // updates problem id
         fetch(`api/problems/${problem_id}`,  {
             method: 'put',
             headers: {
@@ -248,6 +276,11 @@ export default class Home extends Component {
     };
 
     fetchUpdateAll = () => {
+        /**
+         * Fetches the data from api/problems which contains all the problems
+         * then load it to this.state.data,
+         * then set the selectRowKeys based on the value of whether the problem has been completed/solved or not
+         */
         fetch('/api/problems/')
             .then(res => res.json())
             .then(json => {

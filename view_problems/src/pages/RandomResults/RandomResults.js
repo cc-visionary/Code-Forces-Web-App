@@ -14,15 +14,24 @@ export default class componentName extends Component {
     };
 
     showModal = (currentData) => {
+        /**
+         * Shows the modal and set the this.state.currentData to the currentData
+         */
         this.setState({ currentData, solveProblemVisible: true })
     }        
 
     hideModal = () => {
+        /**
+         * Hides the modal and clears the this.state.currentData
+         */
         this.setState({ currentData: {page_url:''}, solveProblemVisible: false })
     }
 
     toggleTimer = () => {
-        if(this.state.timerState == 'Start') {
+        /**
+         * Toggles the timer to start and stop
+         */
+        if(this.state.timerState === 'Start') {
             this.setState({ timerState: 'Stop' })
         } else {
             this.setState({ timerState: 'Start' })
