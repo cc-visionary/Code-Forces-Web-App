@@ -2,8 +2,7 @@ import React, { Component } from 'react';
 import { useHistory } from "react-router-dom";
 import moment from 'moment';
 import { Drawer, Form, Select, Col, Row, DatePicker, Button, InputNumber, Typography } from 'antd'
-import { ResponsiveBar } from '@nivo/bar'
-import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
 const { Option } = Select;
 const { Title } = Typography
@@ -148,7 +147,12 @@ export default class RandomSettings extends Component {
         const today = moment(`${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`, 'YYYY-MM-DD')
         
         const tagCounts = this.props.sortedTags.map(tag => this.state.filtered.filter(d => d['tags'].includes(tag[0])).length)
-        const tagSolved = this.props.sortedTags.map(tag => this.state.filtered.map(d => d['tags'].includes(tag[0]) ? d['number_solved'] : 0).reduce((a, b) => a + b))
+        var tagSolved = []
+        try {
+            tagSolved = this.props.sortedTags.map(tag => this.state.filtered.map(d => d['tags'].includes(tag[0]) ? d['number_solved'] : 0).reduce((a, b) => a + b))
+        } catch {
+            tagSolved = []
+        }
 
         const sumCount = tagCounts.length !== 0 ? tagCounts.reduce((a, b) => a + b) : 0
         const sumSolved = tagSolved.length !== 0 ? tagSolved.reduce((a, b) => a + b) : 0

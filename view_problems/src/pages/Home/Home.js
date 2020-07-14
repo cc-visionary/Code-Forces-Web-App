@@ -221,7 +221,6 @@ export default class Home extends Component {
         }
 
         const selectedRowKeys = this.state.newSelect
-        console.log(selectedRowKeys)
 
         fetch(`api/problems/${problem_id}`,  {
             method: 'put',
