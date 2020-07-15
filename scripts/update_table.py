@@ -12,7 +12,7 @@ def updateTable():
     table_name = 'problems'
     try:
         cursor = connection.cursor()
-        column_names = ['id', 'problem_id', 'name', 'tags', 'difficulty', 'number_solved', 'page_url', 'time_limit', 'memory_limit', 'completed', 'completion_date']
+        column_names = ['id', 'problem_id', 'name', 'tags', 'difficulty', 'number_solved', 'page_url', 'time_limit', 'memory_limit', 'completed', 'completion_date', 'completion_time']
         cursor.execute('SELECT * FROM %s' % table_name)
         existing = cursor.fetchall()
         existing_ids = [exist[0] for exist in existing]
@@ -35,7 +35,7 @@ def updateTable():
                             val = '' if (str(val) == '0' or '0.0' in str(val)) else str(val)
                             ex_val = '' if (str(existing[ex_idx][i + 1]) == '0' or '0.0' in str(existing[ex_idx][i + 1])) else str(existing[ex_idx][i + 1])
                         # print(val, ex_val)
-                        if(val != ex_val):
+                        if(val != ex_val): # if there are changes appends it to changes
                             print('[%s[%d]] needs {%s} to be updated to {%s}' % (values[0], ex_idx, ex_val, val))
                             print(ex_idx, i)
                             print(existing[ex_idx])
@@ -44,7 +44,7 @@ def updateTable():
                     if(len(changes) > 0):
                         update_items.append((values[0], changes))
                 else:
-                    new_items.append(tuple(values + [0, None]))
+                    new_items.append(tuple(values + [0, None, None])) # if doesn't exist, appends the new items 
             # print(new_items)
             # 0, NULL means that we are settings the newly added values to completed = 0 and completion_date = NULL
             try:

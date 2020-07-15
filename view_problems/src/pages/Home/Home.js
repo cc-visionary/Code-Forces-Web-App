@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom'
-import { Menu, Modal, Table, Tag, Space, Button, Input, DatePicker } from 'antd'
+import { Menu, Modal, Table, Tag, Space, Button, Input, DatePicker, TimePicker, message } from 'antd'
 import moment from 'moment'
 import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import RandomSettings from '../../components/RandomSettings/RandomSettings'
@@ -22,6 +22,7 @@ export default class Home extends Component {
            selectRowVisible: false,
            newSelect: [],
            chosenDate: null,
+           chosenTime: '00:00:00',
            chosenRecord: {},
            randomSettingsVisible: false,
         };
@@ -96,7 +97,7 @@ export default class Home extends Component {
         ]
         
         // loops indexes [1 - 7] of the data (does not include: id, completed, and completion_date)
-        this.state.columns.slice(1,-2).forEach(col => {
+        this.state.columns.slice(1, -3).forEach(col => {
             let columnRules = {};
             const col_id = col.toLowerCase().replace(' ', '_')
             if(hasSearch.includes(col)) {
@@ -238,77 +239,77 @@ export default class Home extends Component {
          * Triggers when a row is checked/unchecked
          */
         const today = new Date()
-        const chosenDate = moment(`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()} ${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`, 'YYYY-MM-DD')
         const problem_id = this.state.chosenRecord['problem_id']
         const changeValue = !this.state.chosenRecord['completed']
+
+        var completed_date = completed_date
+        var completed_time = this.state.chosenTime
         try {
-            var completed_date = changeValue === false ? null : this.state.chosenDate.format('YYYY-MM-DD') // if complete is turned to false, we should discard it's date
+            if(changeValue) completed_date = this.state.chosenDate.format('YYYY-MM-DD') // if complete is turned to false, we should discard it's date
         } catch {
-            var completed_date = chosenDate
+            completed_date = `${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}`
         }
 
         const selectedRowKeys = this.state.newSelect
-
         // updates problem id
-        fetch(`api/problems/${problem_id}`,  {
-            method: 'put',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                'completed': changeValue,
-                'completion_date': completed_date
-            })
-        }).then(
-            () => {
-                let data = this.state.data
-                for( let i = 0; i < data.length; i++ ) {
-                    if(data[i]['problem_id'] === problem_id) {
-                        data[i]['completed'] = changeValue
-                        data[i]['completion_date'] = completed_date
-                        break
-                    }
-                }
-                this.setState({ data, selectedRowKeys, chosenDate, selectRowVisible: false });
-            }
-        )
-    };
-
-    fetchUpdateAll = () => {
-        /**
-         * Fetches the data from api/problems which contains all the problems
-         * then load it to this.state.data,
-         * then set the selectRowKeys based on the value of whether the problem has been completed/solved or not
-         */
-        fetch('/api/problems/')
-            .then(res => res.json())
-            .then(json => {
-                this.setState({data: json, loadingTable: false})
-                return json // pass the json data unto the next
-            })
-            .then(json => { 
-                let selectedRowKeys = [] // sets all the completed to be checked
-                json.forEach(val => {
-                    if(val['completed'] === true) {
-                        selectedRowKeys = [...selectedRowKeys, val['problem_id']]
-                    }
+        if(changeValue && this.state.chosenDate === null) {
+            message.error('Please choose a date');
+        } else {
+            fetch(`api/problems/${problem_id}`,  {
+                method: 'put',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'completed': changeValue,
+                    'completion_date': completed_date,
+                    'completion_time': completed_time
                 })
-                this.setState({ selectedRowKeys })
-             })
-    }
+            }).then(
+                () => {
+                    let data = this.state.data
+                    for( let i = 0; i < data.length; i++ ) {
+                        if(data[i]['problem_id'] === problem_id) {
+                            data[i]['completed'] = changeValue
+                            data[i]['completion_date'] = completed_date
+                            data[i]['completion_time'] = completed_time
+                            break
+                        }
+                    }
+                    this.setState({ data, selectedRowKeys, chosenDate: null, chosenTime: '00:00:00', selectRowVisible: false });
+                }
+            )
+        }
+    };
 
     componentDidMount = () => {
-        this.fetchUpdateAll()
-    };
-
+        /**
+         * When it receives the props from App.js, it updates it
+         * then set the selectRowKeys based on the value of whether the problem has been completed/solved or not
+         */
+        let selectedRowKeys = [] // sets all the completed to be checked
+        this.props.data.forEach(val => {
+            if(val['completed'] === true) {
+                selectedRowKeys = [...selectedRowKeys, val['problem_id']]
+            }
+        })
+        if(this.props.data.length != 0) {
+            this.setState({ data: this.props.data, selectedRowKeys, loadingTable: false });
+        }
+    }
+    
     render() {
         const  { selectedRowKeys } = this.state;
-
+        console.log(this.state.data)
         // rowSelection object indicates the need for row selection
         const rowSelection = {
             selectedRowKeys,
-            onChange: (newSelect) => this.setState({ selectRowVisible: true, newSelect }),
+            onChange: (newSelect) => {
+                const data = this.state.data[this.state.data.map(d => d['problem_id'] === newSelect.slice(-1)[0]).indexOf(true)]
+                console.log(data)
+                this.setState({ selectRowVisible: true, newSelect })
+            },
             onSelect: (record) => this.setState({ chosenRecord: record }),
             hideSelectAll: true
         };
@@ -369,6 +370,7 @@ export default class Home extends Component {
                     onCancel={() => this.setState({ selectRowVisible: false })}
                 >
                     <DatePicker style={{display: 'flex'}} value={this.state.chosenDate} onChange={(chosenDate) => this.setState({ chosenDate })} />
+                    <TimePicker onChange={(_, timeString) => this.setState({ chosenTime: timeString })} value={moment(this.state.chosenTime, 'HH:mm:ss')} />
                 </Modal>
             </div>
         )

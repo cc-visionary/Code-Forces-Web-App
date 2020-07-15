@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
-import { Modal, PageHeader, Card, Descriptions, Row, Col, Checkbox, Tag, Typography, Button, Popconfirm, Input } from 'antd';
-import { CaretRightOutlined, PauseOutlined, MinusSquareOutlined } from '@ant-design/icons'
+import { Modal, PageHeader, Card, Descriptions, Row, Col, Checkbox, Tag, Typography, Button, Popconfirm, Input, DatePicker, TimePicker } from 'antd';
+import moment from 'moment'
+import { UilPlay, UilPause, UilBan } from '@iconscout/react-unicons';
 import QueueAnim from 'rc-queue-anim';
 
-const { Text, Title } = Typography
+const { Title } = Typography
 
 export default class componentName extends Component {
     constructor(props) {
@@ -11,17 +12,16 @@ export default class componentName extends Component {
         
         this.state = {
             randomProblems: [],
-            currentData: {page_url:''},
+            currentData: {page_url:'', tags:''},
             solveProblemVisible: false,
             timerState: 'Start',
-            timerIcon: <CaretRightOutlined />,
+            timerIcon: <UilPlay size="20" />,
             timeValue: 0, 
             timeStart: 0,
             timeHour: '00',
             timeMinute: '00',
             timeSecond: '00',
-            timeCentisecond: '00',
-            changeTime: ''
+            timeCentisecond: '00'
         };
     };
 
@@ -32,26 +32,31 @@ export default class componentName extends Component {
         this.setState({ currentData, solveProblemVisible: true })
     }        
 
-    hideModal = () => {
+    hideModal = (code) => {
         /**
          * Hides the modal and clears the this.state.currentData
          * then set the timer to 0
          */
         const today = new Date()
-
-        // updates problem id
-        fetch(`api/problems/${this.state.currentData['problem_id']}`,  {
-            method: 'put',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                'completed': true,
-                'completion_date': today
-            })
-        })
-        this.setState({ currentData: {page_url:''}, solveProblemVisible: false, timeValue: 0, timeHour: '00', timeMinute: '00', timeSecond: '00', timeCentisecond: '00' })
+        if(code === 'proceed') {
+            if(this.state.timeValue !== 0) {
+                // updates problem id's completed value
+                fetch(`api/problems/${this.state.currentData['problem_id']}`,  {
+                    method: 'put',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        'completed': this.state.currentData['completed'],
+                        'completion_date': today,
+                        'completion_time': `${this.state.timeHour}:${this.state.timeMinute}:${this.state.timeSecond}.${this.state.timeCentisecond}`
+                    })
+                })
+            }
+        }
+        this.setState({ currentData: {page_url:'', tags:''}, solveProblemVisible: false, timeValue: 0, timeHour: '00', timeMinute: '00', timeSecond: '00', timeCentisecond: '00' })
+        
     }
 
     onCheck = (problem_id) => {
@@ -96,6 +101,8 @@ export default class componentName extends Component {
                 centisecond = value
                 this.setState({ timeCentisecond: value })
                 break;
+            default:
+                break;
         }
         
         this.setState({ 
@@ -108,7 +115,7 @@ export default class componentName extends Component {
          * Toggles the timer to start and stop
          */
         if(this.state.timerState === 'Start') {
-            this.setState({ timerState: 'Stop', timeStart: Date.now() - this.state.timeValue, timerIcon: <PauseOutlined /> })
+            this.setState({ timerState: 'Stop', timeStart: Date.now() - this.state.timeValue, timerIcon: <UilPause size="20" /> })
             this.timer = setInterval(() => {
                 const timeValue = Date.now() - this.state.timeStart
                 this.setState({ 
@@ -120,7 +127,7 @@ export default class componentName extends Component {
                 });
             }, Math.floor((Math.random() * 100))); // random interval from 0-100
         } else {
-            this.setState({ timerState: 'Start', timerIcon: <CaretRightOutlined /> })
+            this.setState({ timerState: 'Start', timerIcon: <UilPlay size="20" /> })
             clearInterval(this.timer); // pause the time by removing the interval
         }
     }
@@ -131,7 +138,7 @@ export default class componentName extends Component {
 
     render() {
         const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-
+        
         return (
             <div> 
                 <PageHeader
@@ -151,18 +158,10 @@ export default class componentName extends Component {
                                         <Descriptions.Item label="Number of Times Solved">{d['number_solved']}</Descriptions.Item>
                                         <Descriptions.Item label="Difficulty">{d['difficulty']}</Descriptions.Item>
                                         <Descriptions.Item label="Time Limit">{d['time_limit']}</Descriptions.Item>
-                                        <Descriptions.Item label="Memory Limit">{d['memory_limit']}</Descriptions.Item>
-                                        <Descriptions.Item label="Completed">
-                                            <Popconfirm
-                                                title={`Are you sure ${d['completed'] ? 'uncheck' : 'check'} ${d['problem_id']}?`}
-                                                onConfirm={() => this.onCheck(d['problem_id'])}
-                                                okText="Yes"
-                                                cancelText="No"
-                                                placement='bottom'
-                                            >
-                                                <Checkbox checked={d['completed']} />
-                                            </Popconfirm>
-                                        </Descriptions.Item>
+                                        <Descriptions.Item span={2} label="Memory Limit">{d['memory_limit']}</Descriptions.Item>
+                                        <Descriptions.Item label="Completion Date"><DatePicker value={moment(d['completion_date'], 'YYYY-MM-DD')} disabled/></Descriptions.Item>
+                                        <Descriptions.Item label="Completion Time"><TimePicker value={moment(d['completion_time'], 'HH-mm-ss')} disabled /></Descriptions.Item>
+                                        <Descriptions.Item label="Completed"><Checkbox checked={d['completed']} disabled /></Descriptions.Item>
                                         <Descriptions.Item span={3} label="Tags">{d['tags'].split('|').map(tag => <Tag>{tag.toUpperCase()}</Tag>)}</Descriptions.Item>
                                     </Descriptions>
                                     <Row gutter={16}>
@@ -184,9 +183,20 @@ export default class componentName extends Component {
                     width={1080}
                     title={`Solved ${this.state.currentData['name']} (${this.state.currentData['problem_id']})`}
                     visible={this.state.solveProblemVisible}
-                    onOk={this.hideModal}
-                    onCancel={this.hideModal}
+                    onCancel={() => this.hideModal('cancel')}
                     okText="Done"
+                    footer={[
+                        <Button key="back" onClick={() => this.hideModal('cancel')}>Cancel</Button>,
+                        <Popconfirm
+                            title='Are you sure you wish to proceed?'
+                            onConfirm={() => this.hideModal('proceed')}
+                            okText="Yes"
+                            cancelText="No"
+                            placement='bottom'
+                        >
+                            <Button>Done</Button>
+                        </Popconfirm>
+                    ]}
                     cancelText="Close"
                 >
                     <Descriptions>
@@ -206,6 +216,7 @@ export default class componentName extends Component {
                             </Popconfirm>
                         </Descriptions.Item>
                         <Descriptions.Item><Button href={this.state.currentData['page_url'].replace('//problemset', '/problemset')} target='_blank' rel="noopener noreferrer" block>View Page</Button></Descriptions.Item>
+                        <Descriptions.Item span={3} label="Tags">{this.state.currentData['tags'].split('|').map(tag => <Tag>{tag.toUpperCase()}</Tag>)}</Descriptions.Item>
                     </Descriptions>
                     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}} >
                         <Title> 
@@ -220,7 +231,7 @@ export default class componentName extends Component {
                                 <Button onClick={() => this.toggleTimer()} danger={this.state.timerState === 'Stop'}>{this.state.timerIcon}</Button>
                             </Col>
                             <Col span={12}>
-                                <Button onClick={() => this.setState({ timeValue: 0, timeHour: '00', timeMinute: '00', timeSecond: '00', timeCentisecond: '00' })}><MinusSquareOutlined /></Button>
+                                <Button onClick={() => this.setState({ timeValue: 0, timeHour: '00', timeMinute: '00', timeSecond: '00', timeCentisecond: '00' })}><UilBan size="20" /></Button>
                             </Col>
                         </Row>
                     </div>

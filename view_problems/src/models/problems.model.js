@@ -29,6 +29,9 @@ module.exports = (sequelize, Sequelize) => {
       },
       completion_date: {
         type: 'TIMESTAMP'
+      },
+      completion_time: {
+        type: Sequelize.TIME
       }
     }, {
       timestamps: false

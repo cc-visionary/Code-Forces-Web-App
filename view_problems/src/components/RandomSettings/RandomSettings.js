@@ -246,8 +246,7 @@ export default class RandomSettings extends Component {
         } catch {
             tagSolved = []
         }
-        console.log('after tagSolved', this.state.completed)
-
+        
         const sumCount = tagCounts.length !== 0 ? tagCounts.reduce((a, b) => a + b) : 0
         const sumSolved = tagSolved.length !== 0 ? tagSolved.reduce((a, b) => a + b) : 0
 
