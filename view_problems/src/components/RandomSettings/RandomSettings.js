@@ -70,7 +70,8 @@ export default class RandomSettings extends Component {
         filtered = filtered.filter(d => d['number_solved'] >= number_solved_filters)
 
         const completed_filters = col_id === 'completed' ? values : completed
-        filtered = filtered.filter(d => d['completed'] === (completed_filters === 'yes'))
+        if(completed_filters === 'yes') filtered = filtered.filter(d => d['completed'] === true)
+        else if(completed_filters === 'no') filtered = filtered.filter(d => d['completed'] === false)
 
         const diff_filters = col_id === 'difficulty' ? values : difficulty
         filtered = filtered.filter(d => diff_filters.includes(d['difficulty']) || diff_filters.includes('all'))
@@ -219,20 +220,17 @@ export default class RandomSettings extends Component {
          * randomProblems: array of object/dict
          *      contains the chosen random problems and its corresponding data
          */
+        let filtered = this.state.filtered
         let randomProblems = []
-        let uniqueIDs = []
 
-        // if mode "top" is chosen, then we will only get the top half of the filtered data
-        const indexChoices = this.state.mode === 'top' ? this.state.filtered.length / 2 : this.state.filtered.length
 
         // push random problem to randomProblems array while its length is less than the desired length
         while(randomProblems.length < this.state.amount) {
+            // if mode "top" is chosen, then we will only get the top half of the filtered data
+            let indexChoices = this.state.mode === 'top' && filtered.length / 2 > this.state.amount ? filtered.length / 2 : filtered.length
             let randomIndex = Math.floor(Math.random() * indexChoices)
-            let randomID = this.state.filtered[randomIndex]['problem_id']
-            if(!uniqueIDs.includes(randomID)) {
-                uniqueIDs.push(randomID)
-                randomProblems.push(this.state.filtered[randomIndex])
-            }
+            randomProblems.push(filtered[randomIndex])
+            filtered.splice(randomIndex, 1)
         }
         
         return randomProblems
@@ -248,6 +246,7 @@ export default class RandomSettings extends Component {
         } catch {
             tagSolved = []
         }
+        console.log('after tagSolved', this.state.completed)
 
         const sumCount = tagCounts.length !== 0 ? tagCounts.reduce((a, b) => a + b) : 0
         const sumSolved = tagSolved.length !== 0 ? tagSolved.reduce((a, b) => a + b) : 0
@@ -278,7 +277,7 @@ export default class RandomSettings extends Component {
                                 name="amount"
                                 label="Amount"
                                 initialValue={5}
-                                // rules={[{ validator:(_, value) => value <= this.state.filtered.length ? Promise.resolve() : Promise.reject('Amount must be greater than or equal to the current number of filters.') }]}
+                                rules={[{ validator:(_, value) => value <= this.state.filtered.length ? Promise.resolve() : Promise.reject('Amount must be greater than or equal to the current number of filters.') }]}
                             >
                                 <InputNumber style={{width: '100%'}} min={1} max={10} value={this.state.amount} onChange={(amount) => this.setState({ amount })} />
                             </Form.Item>
@@ -328,9 +327,9 @@ export default class RandomSettings extends Component {
                             <Form.Item
                                 name="completed"
                                 label="Completed?"
-                                initialValue={'all'}
+                                initialValue={'no'}
                             >
-                                <Select alue={this.state.completed} onChange={(val) => this.changeCompleted(val)} >
+                                <Select value={this.state.completed} onChange={(val) => this.changeCompleted(val)} >
                                     <Option key='all' value='all'>All</Option>
                                     <Option key='yes' value='yes'>Yes</Option>
                                     <Option key='no' value='no'>No</Option>

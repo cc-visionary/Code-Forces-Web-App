@@ -310,11 +310,6 @@ export default class Home extends Component {
             selectedRowKeys,
             onChange: (newSelect) => this.setState({ selectRowVisible: true, newSelect }),
             onSelect: (record) => this.setState({ chosenRecord: record }),
-            onSelectAll: () => {
-                let selectedRowKeys = []
-                if(this.state.selectedRowKeys.length !== this.state.data.length) selectedRowKeys = this.state.data.map(data => data.index)
-                this.setState({ selectedRowKeys })
-            },
             hideSelectAll: true
         };
 
