@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
+import { useHistory } from "react-router-dom";
 import { Link } from 'react-router-dom'
 import { Menu, Modal, Table, Tag, Space, Button, Input, DatePicker, TimePicker, message } from 'antd'
 import moment from 'moment'
-import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined, ExclamationCircleOutlined, CalendarOutlined, HighlightOutlined, InboxOutlined} from '@ant-design/icons';
 import RandomSettings from '../../components/RandomSettings/RandomSettings'
+import ViewItem from '../../components/ViewItem/ViewItem'
 import './Home.css';
 import 'antd/dist/antd.css';
 
@@ -14,6 +16,8 @@ export default class Home extends Component {
         super(props)
         this.state = {
            data: [],
+           filtered: [],
+           currentData: {},
            columns: ['ID', 'Problem ID', 'Name', 'Tags', 'Difficulty', 'Number Solved', 'Time Limit', 'Memory Limit', 'Page URL', 'Completed', 'Completion Date'],
            loadingTable: true,
            selectedRowKeys: [], // Check here to configure the default column
@@ -25,6 +29,8 @@ export default class Home extends Component {
            chosenTime: '00:00:00',
            chosenRecord: {},
            randomSettingsVisible: false,
+           viewItemVisible: false,
+           showCompleted: false
         };
     }; 
 
@@ -44,14 +50,14 @@ export default class Home extends Component {
         // sets the columns which has special renders
         const renders = {
             'Tags': cats => cats.split('|').map(tag => {
-                let color = ''
+                let color = 0
                 sortedTags.forEach((clr, key) => {
                     if(clr[0] === tag) {
                         color = parseInt((1 - key / sortedTags.length) * 255)
                     }
                 })
                 const red = 0
-                const green = String(255 - color) 
+                const green = 255 - color
                 const blue = color
                 return <Tag style={{
                     backgroundColor: `rgba(${red},${green},${blue}, 0.1)`, 
@@ -60,19 +66,19 @@ export default class Home extends Component {
                 }} key={tag}>{tag.toUpperCase()}</Tag>
             }),
             'Difficulty': tag => {
-                let color = ''
+                let color = 0
                 sortedDifficulty.forEach((clr, key) => {
                     if(Number(clr) === Number(tag)) {
                         color = parseInt(key / sortedDifficulty.length * 255)
                     }
                 })
                 const red = 0
-                const green = String(255 - color) 
+                const green = 255 - color
                 const blue = color
                 return <Tag style={{
-                    backgroundColor: 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.1)', 
-                    color: 'rgb(' + red + ', ' + green + ', ' + blue + ')', 
-                    borderColor: 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.5)'
+                    backgroundColor: `rgba(${red},${green},${blue}, 0.1)`, 
+                    color: `rgb(${red},${green},${blue})`,  
+                    borderColor: `rgba(${red},${green},${blue}, 0.5)`
                 }} key={tag}>{tag}</Tag>
             },
             'Page URL': link => <a href={link.replace('//problemset', '/problemset')} style={{color: ''}} target='_blank' rel="noopener noreferrer">View Page</a>,
@@ -137,6 +143,11 @@ export default class Home extends Component {
             
             columns.push(columnRules)
         })
+
+        columns.push({ // adds the view button at the end
+            'render': (_, data) => <a onClick={() => this.setState({ currentData: data, viewItemVisible: true })}>View</a>
+        })
+
         return columns
     }
 
@@ -283,6 +294,18 @@ export default class Home extends Component {
         }
     };
 
+    filterComplete = () => {
+        var filtered = []
+        if(!this.state.showCompleted) {
+            this.state.data.forEach((d) => {
+                if(d['completed']) filtered.push(d)
+            })
+        } else {
+            filtered = this.state.data
+        }
+        this.setState({ showCompleted: !this.state.showCompleted, filtered })
+    }
+
     componentDidMount = () => {
         /**
          * When it receives the props from App.js, it updates it
@@ -295,19 +318,16 @@ export default class Home extends Component {
             }
         })
         if(this.props.data.length !== 0) {
-            this.setState({ data: this.props.data, selectedRowKeys, loadingTable: false });
+            this.setState({ filtered: this.props.data, data: this.props.data, selectedRowKeys, loadingTable: false });
         }
     }
     
     render() {
         const  { selectedRowKeys } = this.state;
-        console.log(this.state.data)
         // rowSelection object indicates the need for row selection
         const rowSelection = {
             selectedRowKeys,
             onChange: (newSelect) => {
-                const data = this.state.data[this.state.data.map(d => d['problem_id'] === newSelect.slice(-1)[0]).indexOf(true)]
-                console.log(data)
                 this.setState({ selectRowVisible: true, newSelect })
             },
             onSelect: (record) => this.setState({ chosenRecord: record }),
@@ -322,25 +342,35 @@ export default class Home extends Component {
                 <br/>
                 <h1 style={{textAlign: 'center'}}>Codeforces Problems</h1>
                 <Menu style={{display: 'flex', justifyContent: 'flex-end'}} mode="horizontal">
+                    <Menu.Item onClick={() => this.filterComplete()} key="complete" icon={this.state.showCompleted ? <InboxOutlined /> : <HighlightOutlined />}>
+                        {`Show ${ this.state.showCompleted ? 'All' : 'Completed' }`}
+                    </Menu.Item>
                     <Menu.Item onClick={() => this.setState({ randomSettingsVisible: true })} key="random" icon={<CaretRightOutlined />}>
                         Choose Random
                     </Menu.Item>
                     <SubMenu icon={<PieChartOutlined />} title="Statistics">
-                        <Menu.ItemGroup title="Item 1">
-                            <Menu.Item key="setting:1">
-                                <Link to='/statistics/option-1'>Option 1</Link>
-                                </Menu.Item>
-                            <Menu.Item key="setting:2">Option 2</Menu.Item>
+                        <Menu.ItemGroup title="per Letter">
+                            <Menu.Item key="statistics:solved_per_letter">
+                                <Link to={{ pathname: '/statistics', params:{ type: 'solved_per_letter' }}} >Solved</Link>
+                            </Menu.Item>
+                            <Menu.Item key="statistics:2">Statistics 2</Menu.Item>
                         </Menu.ItemGroup>
-                        <Menu.ItemGroup title="Item 2">
-                            <Menu.Item key="setting:3">Option 3</Menu.Item>
-                            <Menu.Item key="setting:4">Option 4</Menu.Item>
+                        <Menu.ItemGroup title="per Tag">
+                            <Menu.Item key="statistics:3">Statistics 3</Menu.Item>
+                            <Menu.Item key="statistics:4">Statistics 4</Menu.Item>
+                        </Menu.ItemGroup>
+                        <Menu.ItemGroup title="per Completed">
+                            <Menu.Item key="statistics:5">Statistics 5</Menu.Item>
+                            <Menu.Item key="statistics:6">Statistics 6</Menu.Item>
+                        </Menu.ItemGroup>
+                        <Menu.ItemGroup title="per Difficulty">
+                            <Menu.Item key="statistics:7">Statistics 7</Menu.Item>
+                            <Menu.Item key="statistics:8">Statistics 8</Menu.Item>
                         </Menu.ItemGroup>
                     </SubMenu>
+                    <Menu.Item onClick={() => console.log('View Calendar')} key="calendar" icon={<CalendarOutlined />}>Calendar</Menu.Item>
                     <Menu.Item key="view" icon={<EyeOutlined />}>
-                        <a href="https://codeforces.com/problemset?order=BY_SOLVED_DESC" target="_blank" rel="noopener noreferrer">
-                            View Problems
-                        </a>
+                        <a href="https://codeforces.com/problemset?order=BY_SOLVED_DESC" target="_blank" rel="noopener noreferrer">All Problem</a>
                     </Menu.Item>
                 </Menu>
                 <Table 
@@ -349,7 +379,7 @@ export default class Home extends Component {
                     pagination={{pageSize:18}}
                     rowSelection={rowSelection} 
                     columns={columns} 
-                    dataSource={this.state.data} 
+                    dataSource={this.state.filtered} 
                     rowKey={row => row.problem_id}
                 />
                 <RandomSettings 
@@ -361,13 +391,20 @@ export default class Home extends Component {
                     sortedTimeLimit={sortedTimeLimit} 
                     sortedMemLimit={sortedMemLimit} 
                 />
+                <ViewItem 
+                    currentData={this.state.currentData} 
+                    visible={this.state.viewItemVisible} 
+                    closeViewItems={() => this.setState({currentData: {}, viewItemVisible: false})} 
+                    sortedTags={sortedTags} 
+                    sortedDifficulty={sortedDifficulty} 
+                />
                 <Modal
                     visible={this.state.selectRowVisible}
                     title={`Are you sure you want to change the value of ${this.state.chosenRecord['problem_id']} to ${!this.state.chosenRecord['completed']}?`}
                     icon={<ExclamationCircleOutlined />}
                     maskClosable={true}
                     onOk={this.onSelectChange.bind(this)}
-                    onCancel={() => this.setState({ selectRowVisible: false })}
+                    onCancel={() => this.setState({ selectRowVisible: false, chosenDate: null, chosenTime: '00:00:00' })}
                 >
                     <DatePicker style={{display: 'flex'}} value={this.state.chosenDate} onChange={(chosenDate) => this.setState({ chosenDate })} />
                     <TimePicker onChange={(_, timeString) => this.setState({ chosenTime: timeString })} value={moment(this.state.chosenTime, 'HH:mm:ss')} />

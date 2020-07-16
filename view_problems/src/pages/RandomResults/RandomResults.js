@@ -40,6 +40,7 @@ export default class componentName extends Component {
         const today = new Date()
         if(code === 'proceed') {
             if(this.state.timeValue !== 0) {
+                message.success(`Completed ${this.state.currentData['problem_id']}!!!`)
                 // updates problem id's completed value
                 fetch(`api/problems/${this.state.currentData['problem_id']}`,  {
                     method: 'put',
@@ -152,8 +153,7 @@ export default class componentName extends Component {
     }
 
     render() {
-        console.log(`${this.state.timeHour}:${this.state.timeMinute}:${this.state.timeSecond}`)
-        const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
         
         return (
             <div> 
@@ -165,10 +165,10 @@ export default class componentName extends Component {
                 />
                 <QueueAnim style={{margin: 16}} component={Row} gutter={[16, 16]} delay={300} interval={150}>
                     { this.state.randomProblems.map(d => {
-                        const letter_index = letters.map(letter => d['problem_id'].includes(letter)).indexOf(true)
+                        const letter = letters.filter(letter => d['problem_id'].includes(letter))[0]
                         return (
                             <Col key={d['problem_id']} span={12}>
-                                <Card title={`${letters[letter_index]} - ${d['name']}`}>
+                                <Card title={`${letter} - ${d['name']}`}>
                                     <Descriptions>
                                         <Descriptions.Item label="Problem ID">{d['problem_id']}</Descriptions.Item>
                                         <Descriptions.Item label="Number of Times Solved">{d['number_solved']}</Descriptions.Item>

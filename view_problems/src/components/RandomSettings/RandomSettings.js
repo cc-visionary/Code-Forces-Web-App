@@ -319,6 +319,25 @@ export default class RandomSettings extends Component {
                                     <Option key='e' value='e'>E</Option>
                                     <Option key='f' value='f'>F</Option>
                                     <Option key='g' value='g'>G</Option>
+                                    <Option key='h' value='h'>h</Option>
+                                    <Option key='i' value='i'>I</Option>
+                                    <Option key='j' value='j'>J</Option>
+                                    <Option key='k' value='k'>K</Option>
+                                    <Option key='l' value='l'>L</Option>
+                                    <Option key='m' value='m'>M</Option>
+                                    <Option key='n' value='n'>N</Option>
+                                    <Option key='o' value='o'>O</Option>
+                                    <Option key='p' value='p'>P</Option>
+                                    <Option key='q' value='q'>Q</Option>
+                                    <Option key='r' value='r'>R</Option>
+                                    <Option key='s' valus='s'>S</Option>
+                                    <Option key='t' valut='t'>T</Option>
+                                    <Option key='u' valuu='u'>U</Option>
+                                    <Option key='v' valuv='v'>V</Option>
+                                    <Option key='w' valuw='w'>W</Option>
+                                    <Option key='x' valux='x'>X</Option>
+                                    <Option key='y' valuy='y'>Y</Option>
+                                    <Option key='z' valuz='z'>Z</Option>
                                 </Select>
                             </Form.Item>
                         </Col>

@@ -9,6 +9,8 @@ import './App.css';
 import Home from './pages/Home/Home';
 import Statistics from './pages/Statistics/Statistics';
 import RandomResults from './pages/RandomResults/RandomResults';
+import Calendar from './pages/Calendar/Calendar'
+import NoMatchPage from './pages/NoMatchPage/NoMatchPage'
 
 
 export default class App extends Component {
@@ -41,9 +43,10 @@ export default class App extends Component {
       <Router className="App">
         <Switch>
           <Route exact path="/random_results" component={RandomResults} />
-          <Route exact path="/statistics" component={Statistics} />
+          <Route exact path="/calendar" component={() => <Calendar  data={this.state.data} />} />
+          <Route exact path="/statistics" component={() => <Statistics data={this.state.data} />} />
           <Route exact path="/" component={() => <Home data={this.state.data} />} />
-          {/* <Route component={NoMatchPage} /> */}
+          <Route component={NoMatchPage} />
         </Switch>
     </Router>
     )
