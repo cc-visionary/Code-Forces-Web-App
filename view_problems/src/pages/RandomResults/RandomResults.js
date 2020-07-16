@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Modal, PageHeader, Card, Descriptions, Row, Col, Checkbox, Tag, Typography, Button, Popconfirm, Input, DatePicker, TimePicker } from 'antd';
+import { Modal, PageHeader, Card, Descriptions, Row, Col, Checkbox, Tag, Typography, Button, Popconfirm, Input, DatePicker, TimePicker, message } from 'antd';
 import moment from 'moment'
 import { UilPlay, UilPause, UilBan } from '@iconscout/react-unicons';
 import QueueAnim from 'rc-queue-anim';
@@ -48,15 +48,30 @@ export default class componentName extends Component {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        'completed': this.state.currentData['completed'],
+                        'completed': true,
                         'completion_date': today,
-                        'completion_time': `${this.state.timeHour}:${this.state.timeMinute}:${this.state.timeSecond}.${this.state.timeCentisecond}`
+                        'completion_time': `${this.state.timeHour}:${this.state.timeMinute}:${this.state.timeSecond}`
                     })
+                }).then(() => { // set the values to the current for the state
+                    var randomProblems = this.state.randomProblems
+                    var index = 0
+                    for(let i = 0; i < randomProblems.length; i++) {
+                        if(randomProblems[i]['problem_id'] === this.state.currentData['problem_id']) {
+                            index = i;
+                            break;
+                        }
+                    }
+                    randomProblems[index]['completed'] = true
+                    randomProblems[index]['completion_date'] = today
+                    randomProblems[index]['completion_time'] = `${this.state.timeHour}:${this.state.timeMinute}:${this.state.timeSecond}`
+                    this.setState({ randomProblems })
+                }).then(() => {
+                    this.setState({ currentData: {page_url:'', tags:''}, solveProblemVisible: false, timeValue: 0, timeHour: '00', timeMinute: '00', timeSecond: '00', timeCentisecond: '00' })
                 })
+            } else {
+                message.error('TimeValue == 0 is invalid');
             }
-        }
-        this.setState({ currentData: {page_url:'', tags:''}, solveProblemVisible: false, timeValue: 0, timeHour: '00', timeMinute: '00', timeSecond: '00', timeCentisecond: '00' })
-        
+        } else this.setState({ currentData: {page_url:'', tags:''}, solveProblemVisible: false, timeValue: 0, timeHour: '00', timeMinute: '00', timeSecond: '00', timeCentisecond: '00' })
     }
 
     onCheck = (problem_id) => {
@@ -137,6 +152,7 @@ export default class componentName extends Component {
     }
 
     render() {
+        console.log(`${this.state.timeHour}:${this.state.timeMinute}:${this.state.timeSecond}`)
         const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
         
         return (
@@ -159,7 +175,7 @@ export default class componentName extends Component {
                                         <Descriptions.Item label="Difficulty">{d['difficulty']}</Descriptions.Item>
                                         <Descriptions.Item label="Time Limit">{d['time_limit']}</Descriptions.Item>
                                         <Descriptions.Item span={2} label="Memory Limit">{d['memory_limit']}</Descriptions.Item>
-                                        <Descriptions.Item label="Completion Date"><DatePicker value={moment(d['completion_date'], 'YYYY-MM-DD')} disabled/></Descriptions.Item>
+                                        <Descriptions.Item label="Completion Date"><DatePicker value={moment(`${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}`, 'YYYY-MM-DD')} disabled/></Descriptions.Item>
                                         <Descriptions.Item label="Completion Time"><TimePicker value={moment(d['completion_time'], 'HH-mm-ss')} disabled /></Descriptions.Item>
                                         <Descriptions.Item label="Completed"><Checkbox checked={d['completed']} disabled /></Descriptions.Item>
                                         <Descriptions.Item span={3} label="Tags">{d['tags'].split('|').map(tag => <Tag>{tag.toUpperCase()}</Tag>)}</Descriptions.Item>
@@ -204,6 +220,7 @@ export default class componentName extends Component {
                         <Descriptions.Item label="Difficulty">{this.state.currentData['difficulty']}</Descriptions.Item>
                         <Descriptions.Item label="Time Limit">{this.state.currentData['time_limit']}</Descriptions.Item>
                         <Descriptions.Item label="Memory Limit">{this.state.currentData['memory_limit']}</Descriptions.Item>
+                        <Descriptions.Item label='Completion Date'><DatePicker value={moment(`${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}`, 'YYYY-MM-DD')} disabled/></Descriptions.Item>
                         <Descriptions.Item label="Completed">
                             <Popconfirm
                                 title={`Are you sure ${this.state.currentData['completed'] ? 'uncheck' : 'check'} ${this.state.currentData['problem_id']}?`}
@@ -215,7 +232,7 @@ export default class componentName extends Component {
                                 <Checkbox checked={this.state.currentData['completed']} />
                             </Popconfirm>
                         </Descriptions.Item>
-                        <Descriptions.Item><Button href={this.state.currentData['page_url'].replace('//problemset', '/problemset')} target='_blank' rel="noopener noreferrer" block>View Page</Button></Descriptions.Item>
+                        <Descriptions.Item span={3} label='Link' ><a href={this.state.currentData['page_url'].replace('//problemset', '/problemset')} target='_blank' rel="noopener noreferrer" >{this.state.currentData['page_url'].replace('//problemset', '/problemset')}</a></Descriptions.Item>
                         <Descriptions.Item span={3} label="Tags">{this.state.currentData['tags'].split('|').map(tag => <Tag>{tag.toUpperCase()}</Tag>)}</Descriptions.Item>
                     </Descriptions>
                     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}} >
@@ -226,7 +243,7 @@ export default class componentName extends Component {
                             <Input onChange={(e) => this.changeTime('second', e.target.value)} style={{border: 'none', width: '50px', fontSize: '24px'}} maxLength={2} value={this.state.timeSecond} />.
                             <Input onChange={(e) => this.changeTime('centisecond', e.target.value)} style={{border: 'none', width: '50px', fontSize: '24px'}} maxLength={2} value={this.state.timeCentisecond} />
                         </Title>
-                        <Row gutter={16}>
+                        <Row gutter={24}>
                             <Col span={12}>
                                 <Button onClick={() => this.toggleTimer()} danger={this.state.timerState === 'Stop'}>{this.state.timerIcon}</Button>
                             </Col>

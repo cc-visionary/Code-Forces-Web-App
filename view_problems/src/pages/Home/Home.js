@@ -242,12 +242,12 @@ export default class Home extends Component {
         const problem_id = this.state.chosenRecord['problem_id']
         const changeValue = !this.state.chosenRecord['completed']
 
-        var completed_date = completed_date
+        var completed_date = null
         var completed_time = this.state.chosenTime
         try {
             if(changeValue) completed_date = this.state.chosenDate.format('YYYY-MM-DD') // if complete is turned to false, we should discard it's date
         } catch {
-            completed_date = `${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}`
+            completed_date = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
         }
 
         const selectedRowKeys = this.state.newSelect
@@ -294,7 +294,7 @@ export default class Home extends Component {
                 selectedRowKeys = [...selectedRowKeys, val['problem_id']]
             }
         })
-        if(this.props.data.length != 0) {
+        if(this.props.data.length !== 0) {
             this.setState({ data: this.props.data, selectedRowKeys, loadingTable: false });
         }
     }
