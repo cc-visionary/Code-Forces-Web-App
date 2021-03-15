@@ -1,1 +1,3 @@
 /view_problems/node_modules
+/scripts/.ipynb_checkpoints
+/scripts/__pycache__

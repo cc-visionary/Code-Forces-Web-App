@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import { useHistory } from "react-router-dom";
-import { Link } from 'react-router-dom'
-import { Menu, Modal, Table, Tag, Space, Button, Input, DatePicker, TimePicker, message } from 'antd'
+import { Link } from 'react-router-dom';
+import { Menu, Modal, Table, Tag, Space, Button, Input, DatePicker, TimePicker, Typography, Row, Col, message } from 'antd'
 import moment from 'moment'
-import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined, ExclamationCircleOutlined, CalendarOutlined, HighlightOutlined, InboxOutlined} from '@ant-design/icons';
+import { SearchOutlined, PieChartOutlined, CaretRightOutlined, EyeOutlined, ExclamationCircleOutlined, CalendarOutlined, HighlightOutlined, InboxOutlined } from '@ant-design/icons';
 import RandomSettings from '../../components/RandomSettings/RandomSettings'
 import ViewItem from '../../components/ViewItem/ViewItem'
 import './Home.css';
@@ -145,7 +144,7 @@ export default class Home extends Component {
         })
 
         columns.push({ // adds the view button at the end
-            'render': (_, data) => <a onClick={() => this.setState({ currentData: data, viewItemVisible: true })}>View</a>
+            'render': (_, data) => <Typography.Link onClick={() => this.setState({ currentData: data, viewItemVisible: true })}>View</Typography.Link>
         })
 
         return columns
@@ -225,18 +224,21 @@ export default class Home extends Component {
         let difficulties = []
         let timeLimit = []
         let memoryLimit = []    
-        this.state.data.forEach(d => {
-            if(d['tags'] !== null && d['tags'] !== '') {
-                d['tags'].split('|').forEach(tag => {
-                    if(tag !== '') {
-                        if(Object.keys(nTags).includes(tag)) nTags[tag] += 1
-                        else nTags[tag] = 0
-                    }
-                })
-            } else if(d['difficulty'] !== null && !difficulties.includes(d['difficulty'])) difficulties.push(d['difficulty'])
-            else if(d['time_limit'] !== null && !timeLimit.includes(d['time_limit'])) timeLimit.push(d['time_limit'])
-            else if(d['memory_limit'] !== null && d['memory_limit'] !== '' && !memoryLimit.includes(d['memory_limit'])) memoryLimit.push(d['memory_limit'])
-        })
+        if(this.state.data.length > 0) {
+            this.state.data.forEach(d => {
+                if(d['tags'] !== null && d['tags'] !== '') {
+                    d['tags'].split('|').forEach(tag => {
+                        if(tag !== '') {
+                            if(Object.keys(nTags).includes(tag)) nTags[tag] += 1
+                            else nTags[tag] = 0
+                        }
+                    })
+                } else if(d['difficulty'] !== null && !difficulties.includes(d['difficulty'])) difficulties.push(d['difficulty'])
+                else if(d['time_limit'] !== null && !timeLimit.includes(d['time_limit'])) timeLimit.push(d['time_limit'])
+                else if(d['memory_limit'] !== null && d['memory_limit'] !== '' && !memoryLimit.includes(d['memory_limit'])) memoryLimit.push(d['memory_limit'])
+            })
+        }
+        
         return [
             Object.entries(nTags).sort((first, second) => {return second[1] - first[1]}), 
             difficulties.sort((a, b) => a - b), 
@@ -254,7 +256,7 @@ export default class Home extends Component {
         const changeValue = !this.state.chosenRecord['completed']
 
         var completed_date = null
-        var completed_time = this.state.chosenTime
+        var completed_time = changeValue ? this.state.chosenTime : null
         try {
             if(changeValue) completed_date = this.state.chosenDate.format('YYYY-MM-DD') // if complete is turned to false, we should discard it's date
         } catch {
@@ -311,12 +313,14 @@ export default class Home extends Component {
          * When it receives the props from App.js, it updates it
          * then set the selectRowKeys based on the value of whether the problem has been completed/solved or not
          */
-        let selectedRowKeys = [] // sets all the completed to be checked
-        this.props.data.forEach(val => {
-            if(val['completed'] === true) {
-                selectedRowKeys = [...selectedRowKeys, val['problem_id']]
-            }
-        })
+        var selectedRowKeys = [] // sets all the completed to be checked
+        if(this.props.data.length > 0) {
+            this.props.data.forEach(val => {
+                if(val['completed'] === true) {
+                    selectedRowKeys = [...selectedRowKeys, val['problem_id']]
+                }
+            })
+        }
         if(this.props.data.length !== 0) {
             this.setState({ filtered: this.props.data, data: this.props.data, selectedRowKeys, loadingTable: false });
         }
@@ -406,8 +410,11 @@ export default class Home extends Component {
                     onOk={this.onSelectChange.bind(this)}
                     onCancel={() => this.setState({ selectRowVisible: false, chosenDate: null, chosenTime: '00:00:00' })}
                 >
-                    <DatePicker style={{display: 'flex'}} value={this.state.chosenDate} onChange={(chosenDate) => this.setState({ chosenDate })} />
-                    <TimePicker onChange={(_, timeString) => this.setState({ chosenTime: timeString })} value={moment(this.state.chosenTime, 'HH:mm:ss')} />
+                    <Row column={2} gutter={16} >
+                        <Col><DatePicker value={this.state.chosenDate} onChange={(chosenDate) => this.setState({ chosenDate })} /></Col>
+                        <Col><TimePicker onChange={(_, timeString) => this.setState({ chosenTime: timeString })} value={moment(this.state.chosenTime, 'HH:mm:ss')} /></Col>
+                    </Row>
+                    
                 </Modal>
             </div>
         )

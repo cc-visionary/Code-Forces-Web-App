@@ -19,6 +19,7 @@
     "fs": "0.0.1-security",
     "mysql": "^2.18.1",
     "mysql2": "^2.1.0",
+    "rc-queue-anim": "^1.8.5",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router": "^5.2.0",

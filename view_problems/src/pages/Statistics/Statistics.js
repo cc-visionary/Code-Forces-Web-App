@@ -57,17 +57,11 @@ export default class componentName extends Component {
                     title='Statistics'
                     subtitle={`(${this.state.statsTitle})`}
                     extra={[
-                        <Select style={{ width: 200 }} onChange={currentStats => this.setState({ currentStats })} defaultValue={'solved_per_letter'} value={this.state.currentStats} >
+                        <Select style={{ width: 200 }} onChange={currentStats => this.setState({ currentStats })} value={this.state.currentStats} >
                             <Option key='solved_per_letter' value='solved_per_letter'>Solved per Letter</Option>
                         </Select>
                     ]}
                 />
-                {/* <PieChart height={720} width={1080}>
-                    <Pie data={per_letter} dataKey={'count'} nameKey={'letter'} cx="50%" cy="50%" innerRadius={20} label={(data) => data['name']}>
-                        <Label dataKey={'count'} position='inside' />
-                        { per_letter.map(d => (<Cell key={d['letter']} fill={d['color']} />)) }
-                    </Pie>
-                </PieChart> */}
                 <Pie 
                     forceFit
                     data={per_letter} 

@@ -3,11 +3,10 @@ from json import loads
 
 def updateTable():
     connection = connect(
-        host='sql12.freesqldatabase.com',
-        user='sql12353831',
-        database='sql12353831',
-        password='Y4jgHbkEtI',
-        port='3306'
+        host='localhost',
+        user='codeforces_user',
+        database='codeforces',
+        password='CODEFORCES_password123$%^',
     )
     table_name = 'problems'
     try:
@@ -23,17 +22,29 @@ def updateTable():
             # check if the data exists (if if does, compare if there is any difference, if not, add it to new_items)
             for d in data:
                 values = list(d.values())
+                try:
+                    values[3] = int(values[3])
+                except:
+                    values[3] = 0
+                try:
+                    values[4] = int(values[4])
+                except:
+                    values[4] = 0
+                try:
+                    values[6] = int(values[6])
+                except:
+                    values[6] = 0
                 if(values[0] in existing_ids):
                     ex_idx = existing_ids.index(values[0]) # existing id index
                     changes = []
                     for i, val in enumerate(values):
                         # print(val, existing[ex_idx][i])
                         try:
-                            val = '' if (str(val) == '0' or '0.0' in str(val)) else float(val)
-                            ex_val = '' if (str(existing[ex_idx][i + 1]) == '0' or '0.0' in str(existing[ex_idx][i + 1])) else float(existing[ex_idx][i + 1])
+                            val = 0 if (str(val) == '0' or '0.0' in str(val)) else float(val)
+                            ex_val = 0 if (str(existing[ex_idx][i + 1]) == '0' or '0.0' in str(existing[ex_idx][i + 1])) else float(existing[ex_idx][i + 1])
                         except:
-                            val = '' if (str(val) == '0' or '0.0' in str(val)) else str(val)
-                            ex_val = '' if (str(existing[ex_idx][i + 1]) == '0' or '0.0' in str(existing[ex_idx][i + 1])) else str(existing[ex_idx][i + 1])
+                            val = 0 if (str(val) == '0' or '0.0' in str(val)) else str(val)
+                            ex_val = 0 if (str(existing[ex_idx][i + 1]) == '0' or '0.0' in str(existing[ex_idx][i + 1])) else str(existing[ex_idx][i + 1])
                         # print(val, ex_val)
                         if(val != ex_val): # if there are changes appends it to changes
                             print('[%s[%d]] needs {%s} to be updated to {%s}' % (values[0], ex_idx, ex_val, val))
@@ -47,6 +58,10 @@ def updateTable():
                     new_items.append(tuple(values + [0, None, None])) # if doesn't exist, appends the new items 
             # print(new_items)
             # 0, NULL means that we are settings the newly added values to completed = 0 and completion_date = NULL
+            
+            print(len(column_names[1:]), len(values))
+            print(column_names[1:])
+            print(values)
             try:
                 cursor.executemany('INSERT INTO %s(%s) VALUES (%s)' % (table_name, ','.join(column_names[1:]), ','.join(['%s' for i in column_names[1:]])), new_items)
                 connection.commit()

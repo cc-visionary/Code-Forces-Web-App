@@ -38,8 +38,6 @@ const difficulty = (currentData, sortedDifficulty) => {
 
 export default function ViewItem(props) {
     const { currentData, visible, closeViewItems, sortedTags, sortedDifficulty } = props
-    
-    console.log(currentData['completion_date'], currentData['completion_time'])
 
     return (
         <Drawer
@@ -60,6 +58,7 @@ export default function ViewItem(props) {
                 <Descriptions.Item label='Completion Date'><DatePicker value={moment(currentData['completion_date'], 'YYYY-MM-DD')} disabled /></Descriptions.Item>
                 <Descriptions.Item label='Completion Time'><TimePicker value={moment(currentData['completion_time'], 'HH:mm:ss')} disabled /></Descriptions.Item>
                 <Descriptions.Item label='Completed?'><Checkbox checked={currentData['completed']} disabled/></Descriptions.Item>
+                <Descriptions.Item label='Page URL'><a href={currentData['page_url'] === undefined ? '#' : currentData['page_url'].replace('//problemset', '/problemset')} style={{color: ''}} target='_blank' rel="noopener noreferrer">{currentData['page_url']}</a></Descriptions.Item>
                 <Descriptions.Item label='Tags'>
                     { currentData['tags'] !== undefined ? tagList(currentData, sortedTags) : <></> }
                 </Descriptions.Item>

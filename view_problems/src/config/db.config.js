@@ -1,8 +1,7 @@
 module.exports = {
-  HOST:'sql12.freesqldatabase.com',
-  USER:'sql12353831',
-  DB:'sql12353831',
-  PASSWORD:'Y4jgHbkEtI',
-  PORT:'3306',
+  HOST:'localhost',
+  USER:'codeforces_user',
+  DB:'codeforces',
+  PASSWORD:'CODEFORCES_password123$%^',
   dialect: "mysql",
 };

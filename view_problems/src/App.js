@@ -30,7 +30,7 @@ export default class App extends Component {
     fetch('/api/problems/')
       .then(res => res.json())
       .then(json => {
-          this.setState({data: json})
+        this.setState({data: json})
       })
   }
 
